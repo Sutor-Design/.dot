@@ -76,7 +76,7 @@ ZSH_THEME="robbyrussell"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git asdf)
+plugins=(git)
 
 source $ZSH/oh-my-zsh.sh
 source $HOME/.zprofile
@@ -84,7 +84,7 @@ source $HOME/.zprofile
 # User configuration
 
 # Env vars
-export GITHUB_PACKAGES_READ_WRITE_TOKEN=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
+export GITHUB_PACKAGES_READ_WRITE_TOKEN=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
 
 # Use a shorter username (rather than dancouperblahblah-mycomputertypeblahblah)
 DEFAULT_USER=$(whoami)
@@ -94,6 +94,9 @@ DEFAULT_USER=$(whoami)
 # Edd emacs to my path
 path+=$HOME/.emacs.d/bin
 
+# ASDF
+export ASDF_DIR='/usr/local/opt/asdf/libexec'
+source $ASDF_DIR/asdf.sh
 
 # You may need to manually set your language environment
 # export LANG=en_US.UTF-8

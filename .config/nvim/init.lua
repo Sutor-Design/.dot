@@ -61,10 +61,15 @@ require("packer").startup({
 	use "nvim-lua/plenary.nvim"
 	-- }}}
   -- ---------------------------------------------------------------------------
+	-- Nui {{{
+	-- desc: A component library for Neovim
+	-- docs: https://github.com/MunifTanjim/nui.nvim
+	use "MunifTanjim/nui.nvim"
+	-- }}}
+  -- ---------------------------------------------------------------------------
 	-- Treesitter {{{
 	-- desc: syntax parsing using the tree-sitter library. Obseletes most previous
-	--       syntax highlighting plugins IN THEORY. 0.6 will, when complete, include this out
-	--       of the box, but for now need the plugin.
+	--       syntax highlighting plugins IN THEORY.
 	--       NOTE: setting it to auto run update. Otherwise need to ensure that
 	--       treesitter packages are installed for each language, treesitter itself
 	--       won't do anything otherwise.
@@ -91,10 +96,12 @@ require("packer").startup({
 		"nvim-telescope/telescope.nvim",
 		requires = {
 			"nvim-lua/plenary.nvim",
-			"nvim-telescope/telescope-project.nvim"
+			"nvim-telescope/telescope-project.nvim",
+			-- "josa42/nvim-telescope-workspaces"
 		},
 		config = function ()
 			require('telescope').load_extension('projects')
+			-- require('telescope').load_extension('workspaces')
 			require("telescope").setup {
 				defaults = {
 					mappings = {
@@ -117,7 +124,6 @@ require("packer").startup({
 		"neovim/nvim-lspconfig",
 		requires = {
 			"williamboman/nvim-lsp-installer",
-			"simrat39/rust-tools.nvim",
 			"hrsh7th/cmp-nvim-lsp",
 		},
 		config = require("lsp_config").config()
@@ -131,6 +137,42 @@ require("packer").startup({
 	use "williamboman/nvim-lsp-installer"
 	-- }}}
   -- ---------------------------------------------------------------------------
+	-- null-ls {{{
+  -- desc: Weird backwards language server, uses NVim as the language server to
+	--			 inject stuff like code actions and stuff. *Mainly* exists here so I
+	--			 can get formatting working.
+  -- docs: https://github.com/jose-elias-alvarez/null-ls.nvim
+	use {
+		"jose-elias-alvarez/null-ls.nvim",
+		requires = {
+			"nvim-lua/plenary.nvim",
+			"neovim/nvim-lspconfig",
+		},
+		config = function ()
+			local null_ls = require("null-ls");
+			-- local helpers = require("null-ls.helpers")
+			local formatting = null_ls.builtins.formatting
+			local diagnostics = null_ls.builtins.diagnostics
+
+			null_ls.setup({
+				sources = {
+					formatting.prettier.with({
+						prefer_local = "node_modules/.bin",
+					}),
+					formatting.stylua.with({
+							condition = function(utils)
+									return utils.root_has_file({"stylua.toml", ".stylua.toml"})
+							end,
+					}),
+					diagnostics.eslint.with({
+						prefer_local = "node_modules/.bin"
+					})
+				},
+			})
+		end
+	}
+	-- }}}
+  -- ---------------------------------------------------------------------------
 	-- rust-tools.nvim {{{
   -- desc: Adds some extra functionality over Rust Analyzer & does the setup yo.
 	-- docs: https://github.com/simrat39/rust-tools.nvim
@@ -141,36 +183,6 @@ require("packer").startup({
 			"nvim-lua/plenary.nvim",
 			"nvim-telescope/telescope.nvim",
 		},
-		-- config = function ()
-		-- 	require("rust-tools").setup {
-		-- 		tools = {
-		-- 			autoSetHints = true,
-		-- 			hover_with_actions = true,
-		-- 			inlay_hints = {
-		-- 				show_parameter_hints = false,
-		-- 				parameter_hints_prefix = "",
-		-- 				other_hints_prefix = "",
-		-- 			},
-		-- 		},
-		-- 		-- all the opts to send to nvim-lspconfig
-		-- 		-- these override the defaults set by rust-tools.nvim
-		-- 		-- see https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#rust_analyzer
-		-- 		server = {
-		-- 			-- on_attach is a callback called when the language server attachs to the buffer
-		-- 			-- on_attach = on_attach,
-		-- 			settings = {
-		-- 				-- to enable rust-analyzer settings visit:
-		-- 				-- https://github.com/rust-analyzer/rust-analyzer/blob/master/docs/user/generated_config.adoc
-		-- 				["rust-analyzer"] = {
-		-- 					-- enable clippy on save
-		-- 					checkOnSave = {
-		-- 						command = "clippy"
-		-- 					},
-		-- 				}
-		-- 			}
-		-- 		},
-		-- 	}
-		-- end,
 	}
 	-- }}}
   -- ---------------------------------------------------------------------------
@@ -264,7 +276,11 @@ require("packer").startup({
 	--			 to document my keybindings as I add them.
   -- docs: https://github.com/folke/which-key.nvim
 	use {
-		"folke/which-key.nvim",
+		-- NOTE: Using https://github.com/zeertzjq/which-key.nvim/tree/patch-1
+		-- until https://github.com/folke/which-key.nvim/pull/227 is merged.
+		"zeertzjq/which-key.nvim",
+		branch = "patch-1",
+		-- "folke/which-key.nvim",
 		config = require("key_mappings").config()
 	}
 	-- }}}
@@ -293,27 +309,34 @@ require("packer").startup({
 			vim.g.nvim_tree_highlight_opened_files = 1
 			-- append a trailing slash to folder names
 			vim.g.nvim_tree_add_trailing = 1
-			-- change cwd of nvim-tree to that of new buffer's when opening nvim-tree.
-			vim.g.nvim_tree_respect_buf_cwd = 1
 			vim.g.nvim_tree_disable_window_picker = 1
 
 			require("nvim-tree").setup {
 				auto_close = true,
-				hijack_cursor = true,
-				nvim_tree_ignore = {
-					--".git",
-					"node_modules",
-					".cache"
+				diagnostics = {
+					enable = true,
 				},
-				tree_follow = 1,
-				tree_follow_update_path = 1,
+				disable_netrw = false,
+				filters = {
+					dotfiles = true,
+					custom = {
+						"node_modules",
+						".cache",
+					},
+				},
+				git = {
+					enable = true,
+					ignore = false,
+				},
+				hijack_cursor = true,
 				update_cwd = true,
 				update_focused_file = {
 					enable = true,
 					update_cwd = true,
 				},
 				view = {
-					width = 40
+					width = 40,
+					autp_resize = true,
 				}
 			}
 		end
@@ -333,32 +356,6 @@ require("packer").startup({
 		config = function()
 			require("persistence").setup()
 		end,
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Project {{{
-  -- desc: Like persistence, and ability to have and then easily access projects
-	--       turns out to be extremely useful.
-  -- docs: https://github.com/ahmedkhalf/project.nvim
-	use {
-		"ahmedkhalf/project.nvim",
-		config = function()
-			require("project_nvim").setup {
-				-- Manual mode doesn't automatically change your root directory, so you have
-				-- the option to manually do so using `:ProjectRoot` command.
-				manual_mode = false,
-				-- Methods of detecting the root directory. **"lsp"** uses the native neovim
-				-- lsp, while **"pattern"** uses vim-rooter like glob pattern matching. Here
-				-- order matters: if one is not detected, the other is used as fallback. You
-				-- can also delete or rearrange the detection methods.
-				detection_methods = { "lsp", "pattern" },
-				-- All the patterns used to detect root dir, when **"pattern"** is in
-				-- detection_methods
-				patterns = { ".git", "_darcs", ".hg", ".bzr", ".svn", "Makefile", "package.json" },
-				-- Show hidden files in telescope
-				show_hidden = true,
-			}
-		end
 	}
 	-- }}}
   -- ---------------------------------------------------------------------------
@@ -405,7 +402,32 @@ require("packer").startup({
 		end,
 	}
 	-- }}}
-  -- ---------------------------------------------------------------------------
+	-- ---------------------------------------------------------------------------
+		-- Project {{{
+		-- desc: Like persistence, and ability to have and then easily access projects
+		--       turns out to be extremely useful.
+		-- docs: https://github.com/ahmedkhalf/project.nvim
+		use {
+			"ahmedkhalf/project.nvim",
+			config = function()
+				require("project_nvim").setup {
+					-- Manual mode doesn't automatically change your root directory, so you have
+					-- the option to manually do so using `:ProjectRoot` command.
+					manual_mode = false,
+					-- Methods of detecting the root directory. **"lsp"** uses the native neovim
+					-- lsp, while **"pattern"** uses vim-rooter like glob pattern matching. Here
+					-- order matters: if one is not detected, the other is used as fallback. You
+					-- can also delete or rearrange the detection methods.
+					detection_methods = { "lsp", "pattern" },
+					-- All the patterns used to detect root dir, when **"pattern"** is in
+					-- detection_methods
+					patterns = { ".git", "_darcs", ".hg", ".bzr", ".svn", "Makefile", "package.json" },
+					-- Show hidden files in telescope
+					show_hidden = true,
+				}
+			end
+		}
+	-- }}}
 	-- Lualine {{{
 	-- desc: I give in, I want a nice status line
 	-- docs: https://github.com/nvim-lualine/lualine.nvim
@@ -424,7 +446,7 @@ require("packer").startup({
 					lualine_a = {'mode'},
 					lualine_b = {'branch', 'diff', {
 						'diagnostics',
-						sources={ 'nvim_lsp'}
+						sources={ 'nvim_diagnostic'}
 					}},
 					lualine_c = {'filename'},
 					lualine_x = {'encoding', 'fileformat', 'filetype'},
@@ -506,6 +528,19 @@ require("packer").startup({
 	}
 	-- }}}
   -- ---------------------------------------------------------------------------
+	-- surround.nvim {{{
+	-- desc: 	Helpers for surrounding selected text with characters
+	-- docs: https://github.com/blackCauldron7/surround.nvim
+	use {
+		"blackCauldron7/surround.nvim",
+		config = function()
+			require"surround".setup({
+				mappings_style = "sandwich"
+			})
+		end
+	}
+	-- }}}
+  -- ---------------------------------------------------------------------------
 	-- Copilot {{{
 	-- desc: GitHub copilot integration
 	-- docs: https://github.com/github/copilot.vim
@@ -514,7 +549,7 @@ require("packer").startup({
 		config = function ()
 			-- remap copilot completion. I'd like to actually be able to use the tab key
 			-- for tabs in insert mode, thanks
-			vim.api.nvim_set_keymap("i", "<C-J>", [[:copilot#Accept<CR>]], { noremap = true, silent = true})
+			vim.cmd([[imap <silent><script><expr> <C-J> copilot#Accept("\<CR>")]])
 			vim.g.copilot_no_tab_map = true
 		end
 	}
@@ -584,9 +619,11 @@ vim.o.lazyredraw = true
 vim.o.showmatch = true
 -- ...after 1/10 of a second
 vim.o.matchtime = 1
--- At least 3 lines visible at top & bottom of screen unless at start/end. Nice,
+-- At least 8 lines visible at top & bottom of screen unless at start/end. Nice,
 -- keeps the cursor in a more sensible position, can see what's above/below.
 vim.o.scrolloff = 8
+-- Same for horizontal scrolling
+vim.o.sidescrolloff = 8
 -- Save undo history
 -- NOTE: would like some way to *NOT* have this local to the current directory
 -- vim.opt.undofile = true
@@ -637,8 +674,8 @@ vim.wo.wrap = false
 -- ============================================================================
 -- {{{ Commands
 -- ============================================================================
-vim.cmd("syntax enable")
-vim.cmd("filetype plugin indent on")
+-- vim.cmd("syntax enable")
+-- vim.cmd("filetype plugin indent on")
 -- ----------------------------------------------------------------------------
 -- Autocommands
 -- ----------------------------------------------------------------------------
@@ -660,22 +697,25 @@ vim.cmd([[autocmd BufWritePre * %s/\n\+\%$//e]])
 -- set wrap for specific filetypes *only*
 vim.api.nvim_exec(
 	[[
-		augroup WrapLineInTeXFile
+		augroup WrapLineInProseFiles
 			autocmd!
 			autocmd FileType md setlocal wrap
 		augroup END
 	]],
 	false
 )
+-- ----------------------------------------------------------------------------
+-- Functions
+-- ----------------------------------------------------------------------------
+require("functions")
 -- }}}
 -- ============================================================================
 -- Key Mappings {{{
 -- ============================================================================
 -- Use `jk` instead of <ESC> to exit insert mode.
+--  REVIEW: I'm remapping capslock to escape, if that is used more often,
+--  consider dropping this mapping.
 vim.api.nvim_set_keymap("i", "jk", "<ESC>", { noremap = true })
---Remap for dealing with word wrap
-vim.api.nvim_set_keymap("n", "k", "v:count == 0 ? 'gk' : 'k'", { noremap = true, expr = true, silent = true })
-vim.api.nvim_set_keymap("n", "j", "v:count == 0 ? 'gj' : 'j'", { noremap = true, expr = true, silent = true })
 -- Delete buffer without closing split. If `:bd` is used on a buffer in a split, then
 -- it also kills that window. This is IMO v annoying behaviour. `:bp|bd #` was located here:
 -- https://stackoverflow.com/a/4468491/1724802
@@ -684,7 +724,7 @@ vim.api.nvim_set_keymap("n", "j", "v:count == 0 ? 'gj' : 'j'", { noremap = true,
 -- (bn would work, too), then bd # (“buffer delete” “alternate file”) deletes the buffer we
 -- just moved away from. See :help bp, :help bd, and :help alternate-file."
 vim.api.nvim_set_keymap("n", "<leader>bd", ":bp|bd #<CR>", { noremap = true, silent = true})
--- Keep the cursor in the same place when usin n, N and J so it does't go radge
+-- Keep the cursor in the same place when using n, N and J so it does't go radge
 -- and jump around the screen
 vim.api.nvim_set_keymap("n", "nzzzv", "n", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("n", "Nzzzv", "N", { noremap = true, silent = true })
@@ -697,4 +737,8 @@ vim.o.inccommand = "nosplit"
 -- Hide some of the completion messages -- :h shortmess gives an explanation as to why
 vim.cmd([[set shortmess+=c]])
 -- }}}
+-- ============================================================================
+-- File explorer {{{
+-- ============================================================================
+require("vex")
 -- ============================================================================
