@@ -15,6 +15,7 @@
 --       - https://github.com/nanotee/nvim-lua-guide/
 --			 - https://gist.github.com/ammarnajjar/3bdd9236cf62513a79db20520ba8467d
 --			 - https://github.com/tjdevries/config_manager/blob/master/xdg_config/nvim/lua/tj/plugins.lua
+--			 - https://github.com/creativenull/dotfiles (see particularly the way plugin setup works)
 -- =============================================================================
 -- {{{ Plugins
 -- =============================================================================
