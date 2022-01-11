@@ -1,12 +1,12 @@
 -- vim:fileencoding=utf-8:foldmethod=marker
--- ============================================================================
+-- =============================================================================
 -- Dan Couper
 -- danielcouper.sutor@gmail.com
 -- https://github.com/DanCouper
 --
--- NOTE: Probably requires nvim HEAD (currently on 0.6 testing releases)
+-- NOTE: Requires HEAD (currently on v0.7). Probably. Some stuff might break if
+-- not on HEAD but whatever, YOLO.
 -- NOTE: Cribbed from a number of sources, in particular:
---
 --       - https://github.com/mjlbach/defaults.nvim
 --       - https://github.com/neovim/nvim-lspconfig/wiki
 --       - https://github.com/mukeshsoni/config/blob/master/.config/nvim/init.lua
@@ -14,18 +14,13 @@
 --       - https://neovim.discourse.group/t/the-300-line-init-lua-challenge/227
 --       - https://github.com/nanotee/nvim-lua-guide/
 --			 - https://gist.github.com/ammarnajjar/3bdd9236cf62513a79db20520ba8467d
--- ============================================================================
--- {{{ Initial setup and general options
--- ============================================================================
--- Remap space as leader key
-vim.api.nvim_set_keymap("", "<Space>", "<Nop>", { noremap = true, silent = true })
-vim.g.mapleader = " "
-vim.g.maplocalleader = " "
--- }}}
--- ============================================================================
+--			 - https://github.com/tjdevries/config_manager/blob/master/xdg_config/nvim/lua/tj/plugins.lua
+-- =============================================================================
 -- {{{ Plugins
--- ============================================================================
--- Automatically ensure that Packer installs itself if it isn't already present...
+-- =============================================================================
+-- TODO: rip all these configs out please. Ideally just a set of `use` calls,
+-- but I think that's optimistic.
+-- Automatically ensure that Packer installs itself if it isn't already present.
 local install_path = vim.fn.stdpath "data" .. "/site/pack/packer/start/packer.nvim"
 
 if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
@@ -42,550 +37,244 @@ vim.api.nvim_exec(
 	false
 )
 -- ...then define plugins
-require("packer").startup({
-	function()
-  -- ---------------------------------------------------------------------------
-	-- Packer {{{
-	-- desc: Package manager written in Lua. Add packages here. Save. Run
-	--			 `:source %`. Run `:PackerInstall`. To update packages, run
-	--			 `:PackerUpdate`. NOTE: Is this necessarily needed? It makes things
-	--			 easier, sure, but with Packer I am installing into a global cache.
-	--			 Whereas Plug installs plugins nicely into the local config folder.
-	-- docs: https://github.com/wbthomason/packer.nvim
+require("packer").startup(function(use)
+	-- Packer --------------------------------------------------------------------
+	-- NOTE: Package manager written in Lua. Add packages here. Save. Run
+	-- `:source %`. Run `:PackerSync`.
 	use "wbthomason/packer.nvim"
-	-- }}}
+  -- Profiling etc -------------------------------------------------------------
+	-- NOTE: Stuff here is for dev on Nvim only, not important to actual editing
+	use "dstein64/vim-startuptime"
+	-- Colour theme --------------------------------------------------------------
+	-- NOTE: Using Lush to build this. It has a nice DSL that allows for live
+	-- updating, and there's a build tool that can then generate output for
+	-- loads of other things (eg, creating a terminal theme). The downside is
+	-- that to make use of it, the theme needs to be a plugin, so that's
+	-- stored at `./sutor_theme.nvim/`. To get live updating when developing, open
+	-- a buffer with the theme file and run `:Lushify<Cr>`
+	use { "rktjmp/lush.nvim" }
+	use { "~/.config/nvim/sutor_theme.nvim", as = "colorscheme" }
+	-- Editorconfig --------------------------------------------------------------
+	-- NOTE: editorconfig keeps text editor config consistent across machines and
+	-- means I don't have to specify the tab/space size in the vim config.
+	use { "editorconfig/editorconfig-vim" }
+	-- Treesitter ----------------------------------------------------------------
+	-- NOTE: setting it to auto run update. Otherwise need to ensure that
+	-- treesitter packages are installed for each language, treesitter itself
+	-- won't do anything otherwise.
+	use { "nvim-treesitter/nvim-treesitter" }
+	-- Language servers ----------------------------------------------------------
+	-- NOTE: This gets a bit complicated the more functionality I add, so
+	-- delegating the configs to a separate module. nvim-lsp-installer is a
+	-- companion to lspconfig; provides utilities for [auto] installing language
+	-- servers.
+	use { "neovim/nvim-lspconfig" }
+	use { "williamboman/nvim-lsp-installer" }
+	-- Completions & Snippets ----------------------------------------------------
+	-- NOTE: Bit of a faff to set up; cmp is the core autocomplete plugin, but
+	-- then need a lod of other stuff to get plugins &c.
+	use { "hrsh7th/nvim-cmp" }
+	use { "hrsh7th/cmp-nvim-lsp" }
+	use { "hrsh7th/cmp-buffer" }
+	use { "hrsh7th/cmp-path" }
+	use { "saadparwaiz1/cmp_luasnip" }
+	use { "onsails/lspkind-nvim" }
+	use { "l3mon4d3/luasnip" }
+	use { "rafamadriz/friendly-snippets" }
+	-- Fuzzy find ----------------------------------------------------------------
+	use { "nvim-telescope/telescope.nvim" }
+	use { "nvim-lua/plenary.nvim" }
+	use { "nvim-telescope/telescope-project.nvim" }
+	-- Commenting ----------------------------------------------------------------
+	use { "numToStr/Comment.nvim" }
+	-- Orgmode -------------------------------------------------------------------
+	use { 'nvim-orgmode/orgmode' }
   -- ---------------------------------------------------------------------------
-	-- Plenary {{{
-	-- desc: Useful Lua functions for NVim
-	-- docs: https://github.com/nvim-lua/plenary.nvim
-	use "nvim-lua/plenary.nvim"
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Nui {{{
-	-- desc: A component library for Neovim
-	-- docs: https://github.com/MunifTanjim/nui.nvim
-	use "MunifTanjim/nui.nvim"
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Treesitter {{{
-	-- desc: syntax parsing using the tree-sitter library. Obseletes most previous
-	--       syntax highlighting plugins IN THEORY.
-	--       NOTE: setting it to auto run update. Otherwise need to ensure that
-	--       treesitter packages are installed for each language, treesitter itself
-	--       won't do anything otherwise.
-	-- docs: https://github.com/nvim-treesitter/nvim-treesitter
-	use {
-		"nvim-treesitter/nvim-treesitter",
-		run = ":TSUpdate",
-		config = function ()
-			require("nvim-treesitter.configs").setup {
-				ensure_installed = "maintained",
-				highlight = {
-					enable = true,
-				},
-			}
-		end
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Telescope {{{
-	-- desc: Magic finder thing. Provides a UI to select things (files, grep
-	--       results, open buffers...)
-	-- docs: https://github.com/nvim-telescope/telescope.nvim
-	use {
-		"nvim-telescope/telescope.nvim",
-		requires = {
-			"nvim-lua/plenary.nvim",
-			"nvim-telescope/telescope-project.nvim",
-			-- "josa42/nvim-telescope-workspaces"
-		},
-		config = function ()
-			require('telescope').load_extension('projects')
-			-- require('telescope').load_extension('workspaces')
-			require("telescope").setup {
-				defaults = {
-					mappings = {
-					i = {
-							["<C-u>"] = false,
-							["<C-d>"] = "delete_buffer",
-						},
-					},
-				},
-			}
-		end
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- nvim-lspconfig {{{
-  -- desc: nvim v0.5+ comes with a language server built-in. This plugin just
- 	--			 contains common configs to make things easier.
-  -- docs: https://github.com/neovim/nvim-lspconfig
-	use {
-		"neovim/nvim-lspconfig",
-		requires = {
-			"williamboman/nvim-lsp-installer",
-			"hrsh7th/cmp-nvim-lsp",
-		},
-		config = require("lsp_config").config()
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- nvim-lsp-installer {{{
-  -- desc: Companion to lspconfig. Provides utilities for [auto] installing
-	--			 language servers.
-  -- docs: https://github.com/williamboman/nvim-lsp-installer
-	use "williamboman/nvim-lsp-installer"
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- null-ls {{{
-  -- desc: Weird backwards language server, uses NVim as the language server to
-	--			 inject stuff like code actions and stuff. *Mainly* exists here so I
-	--			 can get formatting working.
-  -- docs: https://github.com/jose-elias-alvarez/null-ls.nvim
-	use {
-		"jose-elias-alvarez/null-ls.nvim",
-		requires = {
-			"nvim-lua/plenary.nvim",
-			"neovim/nvim-lspconfig",
-		},
-		config = function ()
-			local null_ls = require("null-ls");
-			-- local helpers = require("null-ls.helpers")
-			local formatting = null_ls.builtins.formatting
-			local diagnostics = null_ls.builtins.diagnostics
+end)
 
-			null_ls.setup({
-				sources = {
-					formatting.prettier.with({
-						prefer_local = "node_modules/.bin",
-					}),
-					formatting.stylua.with({
-							condition = function(utils)
-									return utils.root_has_file({"stylua.toml", ".stylua.toml"})
-							end,
-					}),
-					diagnostics.eslint.with({
-						prefer_local = "node_modules/.bin"
-					})
-				},
-			})
-		end
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- rust-tools.nvim {{{
-  -- desc: Adds some extra functionality over Rust Analyzer & does the setup yo.
-	-- docs: https://github.com/simrat39/rust-tools.nvim
-	use {
-		"simrat39/rust-tools.nvim",
-		require = {
-			"nvim-lua/popup.nvim",
-			"nvim-lua/plenary.nvim",
-			"nvim-telescope/telescope.nvim",
-		},
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Completion {{{
-	-- desc: autocompletions
-	-- docs: https://github.com/hrsh7th/nvim-cmp
-	use {
-		"hrsh7th/nvim-cmp",
-		requires = {
-			"hrsh7th/cmp-nvim-lsp",
-			"hrsh7th/cmp-buffer",
-			"hrsh7th/cmp-path",
-			"saadparwaiz1/cmp_luasnip",
-			"onsails/lspkind-nvim",
-		},
-		config = function ()
-			-- This works in tandem with the LSP stuff
-			local cmp = require("cmp")
-			local lspkind = require("lspkind")
-			cmp.setup({
-				completion = {
-					completeopt = "menu,menuone,noinsert",
-				},
-				snippet = {
-					expand = function(args)
-						require("luasnip").lsp_expand(args.body)
-					end,
-				},
-				mapping = {
-					["<C-d>"] = cmp.mapping.scroll_docs(-4),
-					["<C-f>"] = cmp.mapping.scroll_docs(4),
-					["<C-Space>"] = cmp.mapping.complete(),
-					["<C-e>"] = cmp.mapping.close(),
-					["<CR>"] = cmp.mapping.confirm({ select = true }),
-					["<Tab>"] = cmp.mapping(cmp.mapping.select_next_item(), { 'i', 's' }),
-				},
-				sources = {
-					{ name = "nvim_lsp" },
-					{ name = "luasnip" },
-					{ name = "buffer" },
-					{ name = "orgmode" },
-					{ name = "path" },
-				},
-				formatting = {
-					format = lspkind.cmp_format(),
-				},
-				experimental = {
-					native_menu = false,
-					ghost_text = false,
-				}
-			})
-		end
-	}
-	use {
-		"L3MON4D3/LuaSnip",
-		config = function ()
-			require "luasnip/loaders/from_vscode".lazy_load()
-		end
-	}
-
-	use {
-		"rafamadriz/friendly-snippets"
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Commentary {{{
-	-- desc: Easy commenting.
-	-- docs: https://github.com/tpope/vim-commentary
-	use {
-		"tpope/vim-commentary",
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Unimpaired {{{
-	-- desc: Easy movement.
-	-- docs: https://github.com/tpope/vim-unimpaired
-	use "tpope/vim-unimpaired"
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Editorconfig {{{
-	-- desc: Editorconfig keeps text editor config consistent across machines.
-  -- docs: https://github.com/editorconfig/editorconfig-vim
-	use {
-		"editorconfig/editorconfig-vim",
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Which-key {{{
-	-- desc: Displays a popup with possible key bindings of the command just typed.
-	--			 What Spacemacs does, basically. NOTE: this is designed to build on,
-	--			 to document my keybindings as I add them.
-  -- docs: https://github.com/folke/which-key.nvim
-	use {
-		-- NOTE: Using https://github.com/zeertzjq/which-key.nvim/tree/patch-1
-		-- until https://github.com/folke/which-key.nvim/pull/227 is merged.
-		"zeertzjq/which-key.nvim",
-		branch = "patch-1",
-		-- "folke/which-key.nvim",
-		config = require("key_mappings").config()
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- nvim-tree {{{
-  -- desc: honestly, I tried to stick with just telescope + just use Explorer
-	--			 when necessary, but it's too useful having a nice file explorer
-	--			 available.
-  -- docs: https://github.com/kyazdani42/nvim-tree.lua
-	use {
-    "kyazdani42/nvim-tree.lua",
-    requires = "kyazdani42/nvim-web-devicons",
-		config = function ()
-			-- NOTE: global definitions need to go *before* setup
-			-- NOTE: keep an eye on updates for nvim-tree, globals are gradually being migrated
-			--       to the setup function config, so eventually should be able to remove all
-			--       these.
-			vim.g.nvim_tree_auto_ignore_ft = {
-				"alpha",
-			}
-			-- this option shows indent markers when folders are open
-			vim.g.nvim_tree_indent_markers = 1
-			-- will enable file highlight for git attributes (can be used without the icons).
-			vim.g.nvim_tree_git_hl = 1
-			-- will enable folder and file icon highlight for opened files/directories.
-			vim.g.nvim_tree_highlight_opened_files = 1
-			-- append a trailing slash to folder names
-			vim.g.nvim_tree_add_trailing = 1
-			vim.g.nvim_tree_disable_window_picker = 1
-
-			require("nvim-tree").setup {
-				auto_close = true,
-				diagnostics = {
-					enable = true,
-				},
-				disable_netrw = false,
-				filters = {
-					dotfiles = true,
-					custom = {
-						"node_modules",
-						".cache",
-					},
-				},
-				git = {
-					enable = true,
-					ignore = false,
-				},
-				hijack_cursor = true,
-				update_cwd = true,
-				update_focused_file = {
-					enable = true,
-					update_cwd = true,
-				},
-				view = {
-					width = 40,
-					autp_resize = true,
-				}
-			}
-		end
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Persistence {{{
-  -- desc: Persists sessions. This is built into Vim, but is faffy. *Not* having
-	--       this feature automagically available without having to think about
-	--       it turns out to be very annoying.
-  -- docs: https://github.com/folke/persistence.nvim
-	use{
-		"folke/persistence.nvim",
-		-- this will only start session saving when an actual file was opened:
-		event = "BufReadPre",
-		module = "persistence",
-		config = function()
-			require("persistence").setup()
-		end,
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Iceberg (theme) {{{
-	-- desc: Well thought-out theme, not my favourite but author has a phenomenal
-	--       presentation on colour schemes that is an inspiration.
-	-- docs: https://github.com/cocopon/iceberg.vim
-	use "cocopon/iceberg.vim"
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Table mode {{{
-	-- desc: a mode for creating ascii tables. Really good!
-	-- docs: https://github.com/dhruvasagar/vim-table-mode
-	use {
-		"dhruvasagar/vim-table-mode"
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Indent Blankline {{{
-	-- desc: adds visual indentation guides to all lines
-	-- docs: https://github.com/lukas-reineke/indent-blankline.nvim
-	use {
-		"lukas-reineke/indent-blankline.nvim",
-		config = function()
-			vim.opt.list = true
-			vim.opt.listchars:append("space:⋅")
-			vim.opt.listchars:append("eol:↴")
-
-			require("indent_blankline").setup {
-				filetype_exclude = {
-					"help",
-					"terminal",
-					"dashboard",
-					"packer",
-					"alpha",
-				},
-				buftype_exclude = {
-					"terminal",
-				},
-				show_current_context = true,
-				show_end_of_line = true,
-				space_char_blankline = " ",
-			}
-		end,
-	}
-	-- }}}
-	-- ---------------------------------------------------------------------------
-		-- Project {{{
-		-- desc: Like persistence, and ability to have and then easily access projects
-		--       turns out to be extremely useful.
-		-- docs: https://github.com/ahmedkhalf/project.nvim
-		use {
-			"ahmedkhalf/project.nvim",
-			config = function()
-				require("project_nvim").setup {
-					-- Manual mode doesn't automatically change your root directory, so you have
-					-- the option to manually do so using `:ProjectRoot` command.
-					manual_mode = false,
-					-- Methods of detecting the root directory. **"lsp"** uses the native neovim
-					-- lsp, while **"pattern"** uses vim-rooter like glob pattern matching. Here
-					-- order matters: if one is not detected, the other is used as fallback. You
-					-- can also delete or rearrange the detection methods.
-					detection_methods = { "lsp", "pattern" },
-					-- All the patterns used to detect root dir, when **"pattern"** is in
-					-- detection_methods
-					patterns = { ".git", "_darcs", ".hg", ".bzr", ".svn", "Makefile", "package.json" },
-					-- Show hidden files in telescope
-					show_hidden = true,
-				}
-			end
-		}
-	-- }}}
-	-- Lualine {{{
-	-- desc: I give in, I want a nice status line
-	-- docs: https://github.com/nvim-lualine/lualine.nvim
-	use {
-		"nvim-lualine/lualine.nvim",
-		requires = {"kyazdani42/nvim-web-devicons", opt = true},
-		config = function ()
-			require("lualine").setup {
-				options = {
-					icons_enabled = true,
-					theme = "iceberg_dark",
-					component_separators = { left = "", right = ""},
-					section_separators = { left = "", right = ""},
-				},
-				sections = {
-					lualine_a = {'mode'},
-					lualine_b = {'branch', 'diff', {
-						'diagnostics',
-						sources={ 'nvim_diagnostic'}
-					}},
-					lualine_c = {'filename'},
-					lualine_x = {'encoding', 'fileformat', 'filetype'},
-					lualine_y = {'progress'},
-					lualine_z = {'location'}
-				},
-				extensions = {"nvim-tree"},
-			}
-		end,
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Alpha {{{
-	-- desc: Nice startup screen. Lua version of startify/dashboard
-	-- docs: https://github.com/gooloard/vim-alpha
-	use {
-		"goolord/alpha-nvim",
-    config = function ()
-        local alpha = require("alpha")
-        local dashboard = require("alpha.themes.dashboard")
-
-        dashboard.section.buttons.val = {
-					dashboard.button( "f", "  > Find file", ":cd $HOME | Telescope find_files<CR>"),
-					dashboard.button( "r", "  > Recent"   , ":Telescope oldfiles<CR>"),
-					dashboard.button( "s", "  > Settings" , ":e $MYVIMRC<CR>"),
-					dashboard.button( "p", "↺  > Sync packages", ":PackerSync<CR>"),
-					dashboard.button( "q", "  > Quit NVIM", ":qa<CR>"),
-					-- TODO: this obvs won't work, how could I make it work?
-					-- dashboard.button( "x", "∀  > New strategy", ":lua strategy()<CR>"),
-        }
-        dashboard.section.footer.val = require("oblique_strategies")()
-
-        alpha.setup(dashboard.opts)
-    end,
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Orgmode.nvim {{{
-	-- desc: Orgmode, for nvim. Does what it say on the tin.
-	-- docs: https://github.com/kristijanhusak/orgmode.nvim
-	use {
-		'kristijanhusak/orgmode.nvim',
-		config = function()
-			local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
-			parser_config.org = {
-				install_info = {
-					url = 'https://github.com/milisims/tree-sitter-org',
-					revision = 'main',
-					files = {'src/parser.c', 'src/scanner.cc'},
-				},
-				filetype = 'org',
-			}
-
-			require'nvim-treesitter.configs'.setup {
-				-- If TS highlights are not enabled at all, or disabled via `disable` prop, highlighting will fallback to default Vim syntax highlighting
-				highlight = {
-					enable = true,
-					disable = {'org'}, -- Remove this to use TS highlighter for some of the highlights (Experimental)
-					additional_vim_regex_highlighting = {'org'}, -- Required since TS highlighter doesn't support all syntax features (conceal)
-				},
-				ensure_installed = {'org'}, -- Or run :TSUpdate org
-			}
-
-			require('orgmode').setup{
-				org_agenda_files = {'~/Dropbox/orgfiles/*', '~/Personal/orgfiles/**/*'},
-				org_default_notes_file = '~/Dropbox/orgfiles/refile.org',
-			}
-		end
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- minimap.vim {{{
-	-- desc: vim interface for a very nice minimap written in Rust.
-	--       I find them extremely useful for big files, especially combined with
-	--	     errors being highlighted in said minimap.
-	-- docs: https://github.com/wfxr/minimap.vim
-	use {
-		"wfxr/minimap.vim",
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- surround.nvim {{{
-	-- desc: 	Helpers for surrounding selected text with characters
-	-- docs: https://github.com/blackCauldron7/surround.nvim
-	use {
-		"blackCauldron7/surround.nvim",
-		config = function()
-			require"surround".setup({
-				mappings_style = "sandwich"
-			})
-		end
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Copilot {{{
-	-- desc: GitHub copilot integration
-	-- docs: https://github.com/github/copilot.vim
-	use {
-		"github/copilot.vim",
-		config = function ()
-			-- remap copilot completion. I'd like to actually be able to use the tab key
-			-- for tabs in insert mode, thanks
-			vim.cmd([[imap <silent><script><expr> <C-J> copilot#Accept("\<CR>")]])
-			vim.g.copilot_no_tab_map = true
-		end
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	-- Fugitive {{{
-	-- desc: Git tooling
-	-- docs: https://github.com/tpope/vim-fugitive
-	use {
-		"tpope/vim-fugitive",
-	}
-	-- }}}
-  -- ---------------------------------------------------------------------------
-	end,
-	config = {
-		display = {
-			open_fn = require('packer.util').float,
-		}
-	}
-})
+-- for plugins that use `setup`:
+require 'plugins'.setup()
 -- }}}
--- ============================================================================
--- {{{ Colour Scheme
--- ============================================================================
--- NOTE: order is important here
-vim.env.NVIM_TUI_ENABLE_TRUE_COLOR = 1
+-- =============================================================================
+-- {{{ Theme
+-- =============================================================================
+-- Need termguicolors set to get owt fancy
+vim.env.nvim_tui_enable_true_color = 1
 vim.o.termguicolors = true
-vim.cmd [[colorscheme iceberg]]
+vim.cmd [[ colorscheme sutor_dark]]
+-- brute force add keywords to the Todo highlight group
+-- This adds an extra highlight group (`TodoExtra`)
+-- NOTE: TreeSitter seems to deal fine with this, actually. Might not be needed
+-- vim.cmd [[
+-- 	augroup ExtendTodoHighlightGroup
+-- 		autocmd!
+-- 		autocmd Syntax * syn match TodoExtra /\v<(FIXME|NOTE|TODO|REVIEW|OPTIMIZE|XXX)/ containedin=.*Comment,vimCommentTitle
+-- 	augroup END
+-- 	highlight def link TodoExtra Todo
+-- ]]
 -- }}}
+-- =============================================================================
+-- {{{ File browser
 -- ============================================================================
+-- TODO: If I use % to create a new file, it opens the file in the netrw window.
+-- I don't want this to happen, I want it to open in the previous window, *ie*
+-- have identical behaviour to opening an existing file. How do I do this?
+
+-- That banner doesn't seem very useful. If I can pluck out details of it might
+-- be, but just hide it for now by default.
+vim.g.netrw_banner = 0
+-- open files in previous window by default.
+vim.g.netrw_browse_split = 4
+-- NOTE: controlled by `a`, but default hidden files to "show all", I normally
+-- want to see dotfiles etc.
+vim.g.netrw_hide = 0
+-- 1 is "keep current dir immune from the browsing dir", 0 keeps the current dir
+-- the same as the browsing dir. 1 is the default, but I _think_ I'm going to
+-- want this toggleable.
+vim.g.netrw_keepdir = 1
+-- set the default list style to "tree"
+vim.g.netrw_liststyle = 3
+vim.g.netrw_altv = 1
+-- <tab> map supporting shrinking/expanding a window enabled
+vim.g.netrw_usetab = 1
+vim.g.netrw_winsize = 25
+vim.g.NetrwTopLvlMenu = "Vex"
+
+function ToggleNetrw()
+    if vim.g.NetrwIsOpen then
+        local i = vim.fn.bufnr("$")
+        while (i >= 1)
+        do
+            if (vim.fn.getbufvar(i, "&filetype") == "netrw") then
+                vim.cmd("bwipeout" .. i)
+                break
+            end
+            i = i - 1
+        end
+        vim.g.NetrwIsOpen = false
+    else
+        vim.g.NetrwIsOpen = true
+        vim.cmd("Vexplore")
+    end
+end
+
+vim.api.nvim_set_keymap("n", "<C-n>", [[:lua ToggleNetrw()<CR>]], { noremap = true, silent = true })
+
+vim.cmd [[
+	augroup AutoDeleteNetrwHiddenBuffers
+		autocmd!
+		autocmd FileType netrw setlocal bufhidden=wipe
+	augroup END
+]]
+-- }}}
+-- =============================================================================
 -- {{{ Options
 -- ============================================================================
+-- ----------------------------------------------------------------------------
+-- global options
+-- ----------------------------------------------------------------------------
+vim.o.title = true
+vim.o.titlestring = " %t"
+-- set highlight on search
+vim.o.hlsearch = false
+-- enable mouse mode
+vim.o.mouse = "a"
+-- highlight current line
+vim.o.cursorline = true
+-- show autocomplete menu on <tab>
+vim.o.wildmenu = true
+-- don't redraw as much
+vim.o.lazyredraw = true
+-- highlight matching [({})]...
+vim.o.showmatch = true
+-- ...after 1/10 of a second
+vim.o.matchtime = 1
+-- show non-visible characters
+vim.o.list = true
+vim.o.listchars = "eol:↴,extends:…,nbsp:▴,precedes:…,space:⋅,tab:> ,trail:-"
+-- at least 8 lines visible at top & bottom of screen unless at start/end. nice,
+-- keeps the cursor in a more sensible position, can see what's above/below.
+vim.o.scrolloff = 8
+-- same for horizontal scrolling
+vim.o.sidescrolloff = 8
+--case insensitive searching unless /c or capital in search
+vim.o.ignorecase = true
+vim.o.smartcase = true
+--decrease update time
+vim.o.updatetime = 250
+-- code folding
+-- adds character space to left of screen. leave this in regradless because i
+-- like a bit of padding and padding is quite difficult to get with vim so i'll
+-- take it where i can
+vim.o.foldcolumn = "1"
+-- NOTE: maybe turn off for the minute, i think it's possibly more annoying than
+-- useful *in general*. for specific filetypes it's extremely useful, so
+-- ideally i want it enabled only for them, but i need to actually note which
+-- ones during usage.
+vim.o.foldenable = true
+-- NOTE: however maybe I just want it turned off for this file as it was
+-- driving me nuts?? even just using the markers is driving me nuts.
+-- anyway, maybe i just want it off for this file, in which case, modeline opts:
+vim.o.modelines = 2
+vim.bo.modeline = true
+-- having now accidentally fatfingered my way through losing a large chunk of
+-- work due to fucking swapfile recovery I did not need recovering, turn off
+-- the fucking swapfile recovery stuff, yolo etc.
+vim.o.writebackup = false
+vim.o.swapfile = false
+-- show substitution live as I type. Yes pls
+vim.o.inccommand = "nosplit"
+-- completion-related
+vim.o.inccommand = "nosplit"
+-- hide some of the completion messages -- :h shortmess gives an explanation as to why
+vim.cmd([[set shortmess+=c]])
+-- ----------------------------------------------------------------------------
+-- window options
+-- ----------------------------------------------------------------------------
+-- make line numbers default
+vim.wo.number = true
+-- use relative numbering to make it easier to j and k around
+vim.wo.relativenumber = true
+-- show the sign column. the sign column is for stuff like highlighting lines
+-- with errors or git integration stuff.
+vim.wo.signcolumn = "yes"
+-- in the sign column, I want diagnostic hints to be a symbol, with colour
+-- denoting level; I don't really like the default letter.
+local signs = {
+	-- { name = "DiagnosticSignError", text = "" },
+	-- { name = "DiagnosticSignWarn", text = "" },
+	-- { name = "DiagnosticSignHint", text = "" },
+	-- { name = "DiagnosticSignInfo", text = "" },
+	{ name = "DiagnosticSignError", text = "※" },
+	{ name = "DiagnosticSignWarn", text = "※" },
+	{ name = "DiagnosticSignHint", text = "※" },
+	{ name = "DiagnosticSignInfo", text = "※" },
+}
+
+for _, sign in ipairs(signs) do
+	vim.fn.sign_define(sign.name, { texthl = sign.name, text = sign.text, numhl = "" })
+end
+-- the colorcolunm is just a visual reminder of the ideal max width. 80 is
+-- good for me i think, maybe i'm probably doing something too nested or verbose
+-- if i go over it, who knows.
+-- NOTE: yes, it's set to 81.
+vim.wo.colorcolumn = "81"
+-- turn *off* wordwrap by default, only want it for prose.
+vim.wo.wrap = false
+-- ----------------------------------------------------------------------------
+-- completion- and syntax-related options
+-- ----------------------------------------------------------------------------
+-- markdown syntax highlighting
+vim.g.markdown_fenced_languages = {
+	"ts=typescript"
+}
 -- which key to use when confirming completions
 vim.g.completion_confirm_key = ""
--- Extra completions stuff
+-- extra completions stuff
 vim.g.completion_matching_strategy_list = {"exact", "substring", "fuzzy"}
+-- I mean this is supposed to weight things but it really doesn't seem to do
+-- great, hey ho. I still generally get "text" as the most common option above
+-- useful stuff like LSP results.
 vim.g.completion_chain_complete_list = {
 	complete_items = {
 		"lsp",
@@ -596,89 +285,13 @@ vim.g.completion_chain_complete_list = {
 		"<c-n>",
 	}
 }
--- Markdown syntax highlighting
-vim.g.markdown_fenced_languages = {
-	"ts=typescript"
-}
--- ----------------------------------------------------------------------------
--- Global Options
--- ----------------------------------------------------------------------------
-vim.o.title = true
-vim.o.titlestring = " %t"
--- Set highlight on search
-vim.o.hlsearch = false
--- Enable mouse mode
-vim.o.mouse = "a"
--- Highlight current line
-vim.o.cursorline = true
--- Show autocomplete menu on <TAB>
-vim.o.wildmenu = true
--- Don't redraw as much
-vim.o.lazyredraw = true
--- Highlight matching [({})]...
-vim.o.showmatch = true
--- ...after 1/10 of a second
-vim.o.matchtime = 1
--- At least 8 lines visible at top & bottom of screen unless at start/end. Nice,
--- keeps the cursor in a more sensible position, can see what's above/below.
-vim.o.scrolloff = 8
--- Same for horizontal scrolling
-vim.o.sidescrolloff = 8
--- Save undo history
--- NOTE: would like some way to *NOT* have this local to the current directory
--- vim.opt.undofile = true
--- Hoy it in the .cache folder
--- vim.opt.undodir = ".nvim-undocache"
---Case insensitive searching UNLESS /C or capital in search
-vim.o.ignorecase = true
-vim.o.smartcase = true
---Decrease update time
-vim.o.updatetime = 250
--- Code folding
--- Adds character space to left of screen. Leave this in regradless because I
--- like a bit of padding and padding is quite difficult to get with Vim so I'll
--- take it where I can
-vim.o.foldcolumn = "1"
--- NOTE: maybe turn off for the minute, I think it's possibly more annoying than
--- useful *in general*. For specific filetypes it's extremely useful, so
--- ideally I want it enabled only for them, but I need to actually note which
--- ones during usage.
-vim.o.foldenable = true
--- NOTE: however maybe I just want it turned off for this file as it was
--- driving me nuts?? Even just using the markers is driving me nuts.
--- Anyway, maybe I just want it off for this file, in which case, modeline opts:
-vim.o.modelines = 2
-vim.bo.modeline = true
--- Having now accidentally fatfingered my way through losing a large chunk of
--- work due to fucking swapfile recovery I did not need recovering, turn off
--- the fucking swapfile recovery stuff, YOLO etc.
-vim.o.writebackup = false
-vim.o.swapfile = false
--- ----------------------------------------------------------------------------
--- Window options
--- ----------------------------------------------------------------------------
--- Make line numbers default
-vim.wo.number = true
--- Use relative numbering to make it easier to j and k around
-vim.wo.relativenumber = true
--- Show the sign column. The sign column is for stuff like highlighting lines
--- with errors or git integration stuff.
-vim.wo.signcolumn = "yes"
--- The colorcolunm is just a visual reminder of the ideal max width. 80 is
--- good for me I think, maybe I'm probably doing something too nested or verbose
--- if I go over it, who knows.
-vim.wo.colorcolumn = "80"
--- Turn *off* wordwrap
-vim.wo.wrap = false
+-- hide some of the completion messages -- :h shortmess gives an explanation as
+-- to why.
+vim.cmd([[set shortmess+=c]])
 -- }}}
--- ============================================================================
+-- =============================================================================
 -- {{{ Commands
--- ============================================================================
--- vim.cmd("syntax enable")
--- vim.cmd("filetype plugin indent on")
--- ----------------------------------------------------------------------------
--- Autocommands
--- ----------------------------------------------------------------------------
+-- =============================================================================
 -- Highlight on yank
 vim.api.nvim_exec(
   [[
@@ -704,41 +317,36 @@ vim.api.nvim_exec(
 	]],
 	false
 )
--- ----------------------------------------------------------------------------
--- Functions
--- ----------------------------------------------------------------------------
-require("functions")
 -- }}}
--- ============================================================================
--- Key Mappings {{{
--- ============================================================================
--- Use `jk` instead of <ESC> to exit insert mode.
---  REVIEW: I'm remapping capslock to escape, if that is used more often,
---  consider dropping this mapping.
-vim.api.nvim_set_keymap("i", "jk", "<ESC>", { noremap = true })
--- Delete buffer without closing split. If `:bd` is used on a buffer in a split, then
--- it also kills that window. This is IMO v annoying behaviour. `:bp|bd #` was located here:
--- https://stackoverflow.com/a/4468491/1724802
---
--- "The bp command (“buffer previous”) moves us to a different buffer in the current window
--- (bn would work, too), then bd # (“buffer delete” “alternate file”) deletes the buffer we
--- just moved away from. See :help bp, :help bd, and :help alternate-file."
-vim.api.nvim_set_keymap("n", "<leader>bd", ":bp|bd #<CR>", { noremap = true, silent = true})
--- Keep the cursor in the same place when using n, N and J so it does't go radge
+-- =============================================================================
+-- {{{ Keymaps
+-- =============================================================================
+-- Remap space as leader key
+vim.api.nvim_set_keymap("", "<Space>", "<Nop>", { noremap = true, silent = true })
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
+-- copy to system clipboard/paste from system clipboard
+vim.api.nvim_set_keymap("v", [[<Leader>y]], [["+y]], { noremap = true, silent = true })
+vim.api.nvim_set_keymap("v", [[<Leader>p]], [["+p]], { noremap = true, silent = true })
+vim.api.nvim_set_keymap("v", [[<Leader>P]], [["+P]], { noremap = true, silent = true })
+-- A few commands for quickly accessing and saving Neovim config
+vim.api.nvim_set_keymap("n", [[<Leader>ve]], [[:e $MYVIMRC<Cr>]], { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", [[<Leader>vE]], [[:view $MYVIMRC<Cr>]], { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", [[<Leader>vs]], [[:w<Cr> :luafile $MYVIMRC<Cr>]], { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", [[<Leader>vx]], [[<Cmd>lua require("plugins.telescope").find_config_files()<CR>]], { noremap = true, silent = true })
+
+-- keep the cursor in the same place when using n, n and j so it does't go radge
 -- and jump around the screen
 vim.api.nvim_set_keymap("n", "nzzzv", "n", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("n", "Nzzzv", "N", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("n", "mzJ`z", "J", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "nzzzv", "n", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "mzj`z", "j", { noremap = true, silent = true })
+
+-- Telescope mappings
+vim.api.nvim_set_keymap("n", "<Leader>ff", [[<Cmd>lua require("plugins.telescope").find_files()<Cr>]], { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<Leader>fg", [[<Cmd>lua require("plugins.telescope").live_grep()<Cr>]], { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<Leader><Space>", [[<Cmd>lua require("plugins.telescope").buffers()<Cr>]], { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<Leader>fh", [[<Cmd>lua require("plugins.telescope").help_tags()<Cr>]], { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<Leader>fo", [[<Cmd>lua require("plugins.telescope").recent_files()<CR>]], { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<Leader>fp", [[<Cmd>lua require("plugins.telescope").projects()<CR>]], { noremap = true, silent = true })
+-- =============================================================================
 -- }}}
--- ============================================================================
--- Completions {{{
--- ============================================================================
-vim.o.inccommand = "nosplit"
--- Hide some of the completion messages -- :h shortmess gives an explanation as to why
-vim.cmd([[set shortmess+=c]])
--- }}}
--- ============================================================================
--- File explorer {{{
--- ============================================================================
-require("vex")
--- ============================================================================
