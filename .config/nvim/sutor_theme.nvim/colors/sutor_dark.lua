@@ -17,5 +17,4 @@ vim.g.colors_name = "sutor_dark"
 package.loaded["lush_theme.sutor_dark"] = nil
 
 -- include our theme file and pass it to lush to apply
-require("lush")(require('lush_theme.sutor_dark'))
-
+require("lush")(require("lush_theme.sutor_dark"))

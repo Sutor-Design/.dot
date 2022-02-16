@@ -4,14 +4,14 @@ local currentmod = (...)
 local M = {}
 
 local function add(modname)
-  local modulepath = string.format('%s.%s', currentmod, modname)
-  local success, results = pcall(require, modulepath)
-  if not success then
-    vim.api.nvim_err_writeln(results)
-    return
-  end
+	local modulepath = string.format("%s.%s", currentmod, modname)
+	local success, results = pcall(require, modulepath)
+	if not success then
+		vim.api.nvim_err_writeln(results)
+		return
+	end
 
-  return results
+	return results
 end
 
 M.init = function()
@@ -19,13 +19,15 @@ M.init = function()
 end
 
 M.setup = function()
-  add 'cmp'
-	add 'comment'
-  add 'lsp'
-	add 'luasnip'
-  add 'org'
-	add 'telescope'
-	add 'treesitter'
+	add("cmp")
+	add("comment")
+	add("lsp")
+	add("luasnip")
+	add("null-ls")
+	add("org")
+	add("telescope")
+	add("treesitter")
+	add("which-key")
 end
 
 return M

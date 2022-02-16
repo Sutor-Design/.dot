@@ -18,9 +18,9 @@ brew 'tcl-tk'
 brew 'dprint'
 brew 'stylua'
 # Nvim-related:
-brew 'luajit', args: ['--HEAD']
-brew 'neovim', args: ["HEAD"]
-brew 'tree-sitter', args: ["HEAD"]
+brew 'luajit', args: ['HEAD']
+brew 'neovim', args: ['HEAD']
+brew 'tree-sitter', args: ['HEAD']
 brew 'code-minimap'
 # Grep upgrade:
 brew 'ripgrep'

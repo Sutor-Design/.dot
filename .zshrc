@@ -83,8 +83,11 @@ source $HOME/.zprofile
 
 # User configuration
 
+# Use vim mode
+bindkey -v
+
 # Env vars
-export GITHUB_PACKAGES_READ_WRITE_TOKEN=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
+export GITHUB_PACKAGES_READ_WRITE_TOKEN=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
 
 # Use a shorter username (rather than dancouperblahblah-mycomputertypeblahblah)
 DEFAULT_USER=$(whoami)
