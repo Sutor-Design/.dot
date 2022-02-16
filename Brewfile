@@ -22,7 +22,9 @@ brew 'luajit', args: ['HEAD']
 brew 'neovim', args: ['HEAD']
 brew 'tree-sitter', args: ['HEAD']
 brew 'code-minimap'
-# Grep upgrade:
+# `find` upgrade
+brew 'fd'
+# `grep` upgrade:
 brew 'ripgrep'
 # Cat upgrade:
 brew 'bat'
