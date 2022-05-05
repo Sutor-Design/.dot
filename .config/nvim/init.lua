@@ -93,7 +93,6 @@ require("packer").startup(function(use)
 	-- servers (not *necessarily* a great idea, but I'll stick with it for now).
 	use { "neovim/nvim-lspconfig" }
 	use { "williamboman/nvim-lsp-installer" }
-	-- use { "jose-elias-alvarez/null-ls.nvim" }
 	use { "b0o/schemastore.nvim" }
 	-- Completions & Snippets ----------------------------------------------------
 	-- NOTE: Bit of a faff to set up; cmp is the core autocomplete plugin, but
