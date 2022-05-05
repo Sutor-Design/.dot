@@ -87,7 +87,7 @@ source $HOME/.zprofile
 bindkey -v
 
 # Env vars
-export GITHUB_PACKAGES_READ_WRITE_TOKEN=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
+# export GITHUB_PACKAGES_READ_WRITE_TOKEN=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
 # Use a shorter username (rather than dancouperblahblah-mycomputertypeblahblah)
 DEFAULT_USER=$(whoami)
 

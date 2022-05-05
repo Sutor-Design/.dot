@@ -1,5 +1,5 @@
 -- Certain plugins require quite a bit of setup.
--- This will utomatically run `init` or `setup` functions for those plugins.
+-- This will automatically run `init` or `setup` functions for those plugins.
 local currentmod = (...)
 local M = {}
 
@@ -23,7 +23,6 @@ M.setup = function()
 	add("comment")
 	add("lsp")
 	add("luasnip")
-	-- add("null-ls")
 	add("org")
 	add("telescope")
 	add("treesitter")
