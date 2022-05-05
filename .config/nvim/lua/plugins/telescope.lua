@@ -1,4 +1,5 @@
 local telescope = require "telescope"
+local telescope_actions = require "telescope.actions"
 local telescope_builtin = require "telescope.builtin"
 
 telescope.load_extension "project"
@@ -39,8 +40,7 @@ M.buffers = function()
 		mappings = {
 			i = {
 				["<C-u>"] = false,
-				-- FIXME: this currently errors for me
-				-- ["<C-d>"] = "delete_buffer",
+				["<C-d>"] = telescope_actions.delete_buffer + telescope_actions.move_to_top,
 			},
 		},
 	}
@@ -61,6 +61,7 @@ end
 M.file_browser = function()
 	telescope.extensions.file_browser.file_browser {
 		hidden = true,
+		grouped = true,
 	}
 end
 

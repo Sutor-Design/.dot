@@ -44,6 +44,8 @@ require("packer").startup(function(use)
 	-- NOTE: Package manager written in Lua. Add packages here. Save. Run
 	-- `:source %`. Run `:PackerSync`.
 	use { "wbthomason/packer.nvim" }
+	-- Plenary -------------------------------------------------------------------
+	use { "nvim-lua/plenary.nvim" }
 	-- Profiling etc -------------------------------------------------------------
 	-- NOTE: Stuff here is for dev on Nvim only, not important to actual editing
 	use { "dstein64/vim-startuptime" }
@@ -55,13 +57,16 @@ require("packer").startup(function(use)
 	-- stored at `./sutor_theme.nvim/`. To get live updating when developing, open
 	-- a buffer with the theme file and run `:Lushify<Cr>`
 	use { "rktjmp/lush.nvim" }
-	use { "~/.config/nvim/sutor_theme.nvim", as = "colorscheme" }
+	use {
+		"~/.config/nvim/sutor_theme.nvim",
+		as = "colorscheme",
+	}
 	-- New NVim UI ---------------------------------------------------------------
 	-- NOTE: NVim is *starting* to implement UI stuff. It's a little raw atm, but
 	-- there are a few plugin authors making it all a bit more approachable.
 	-- IMPORTANT: this stuff a. requires somewhat bleeding-edge version of NVim,
 	-- and b. is going to go out of date pretty quickly, so be careful.
-	use { "stevearc/dressing.nvim" }
+	-- use { "stevearc/dressing.nvim" }
 	-- Editorconfig --------------------------------------------------------------
 	-- NOTE: editorconfig keeps text editor config consistent across machines and
 	-- means I don't have to specify the tab/space size in the vim config.
@@ -70,12 +75,17 @@ require("packer").startup(function(use)
 	-- NOTE: setting it to auto run update. Otherwise need to ensure that
 	-- treesitter packages are installed for each language, treesitter itself
 	-- won't do anything otherwise.
-	use { "nvim-treesitter/nvim-treesitter" }
-	-- Plus some treesitter-powered stuff, just testing!
-	-- REVIEW: this adds some virtual text showing the current context after the
-	-- current block, function etc. This may be annoying, but should be v helpful
-	-- in larger codebases.
-	use { "haringsrob/nvim_context_vt" }
+	use {
+		"nvim-treesitter/nvim-treesitter",
+		requires = {
+			-- Plus some treesitter-powered stuff, just testing!
+			"nvim-treesitter/nvim-tree-docs",
+			-- REVIEW: this adds some virtual text showing the current context after the
+			-- current block, function etc. This may be annoying, but should be v helpful
+			-- in larger codebases.
+			"haringsrob/nvim_context_vt",
+		}
+	}
 	-- Language servers ----------------------------------------------------------
 	-- NOTE: This gets a bit complicated the more functionality I add, so
 	-- delegating the configs to a separate module. nvim-lsp-installer is a
@@ -83,7 +93,7 @@ require("packer").startup(function(use)
 	-- servers (not *necessarily* a great idea, but I'll stick with it for now).
 	use { "neovim/nvim-lspconfig" }
 	use { "williamboman/nvim-lsp-installer" }
-	use { "jose-elias-alvarez/null-ls.nvim" }
+	-- use { "jose-elias-alvarez/null-ls.nvim" }
 	use { "b0o/schemastore.nvim" }
 	-- Completions & Snippets ----------------------------------------------------
 	-- NOTE: Bit of a faff to set up; cmp is the core autocomplete plugin, but
@@ -91,25 +101,35 @@ require("packer").startup(function(use)
 	-- NOTE: Snippets have been commented out rather than completely removed;
 	-- just testing to see if I miss them. They are extremely annoying at times,
 	-- so if I can nix them, then good.
-	use { "hrsh7th/nvim-cmp" }
-	use { "hrsh7th/cmp-nvim-lsp" }
-	use { "hrsh7th/cmp-buffer" }
-	use { "hrsh7th/cmp-path" }
-	use { "saadparwaiz1/cmp_luasnip" }
-	use { "onsails/lspkind-nvim" }
-	use { "l3mon4d3/luasnip" }
-	-- use { "rafamadriz/friendly-snippets" }
+	use {
+		"hrsh7th/nvim-cmp",
+		requires = {
+			"hrsh7th/cmp-nvim-lsp",
+			"hrsh7th/cmp-buffer",
+			"hrsh7th/cmp-path",
+			"saadparwaiz1/cmp_luasnip",
+			"onsails/lspkind-nvim",
+			"l3mon4d3/luasnip",
+			-- "rafamadriz/friendly-snippets",
+		}
+	}
 	-- Fuzzy find ----------------------------------------------------------------
-	use { "nvim-telescope/telescope.nvim" }
-	use { "nvim-lua/plenary.nvim" }
-	use { "nvim-telescope/telescope-project.nvim" }
-	use { "nvim-telescope/telescope-file-browser.nvim" }
+	use {
+		"nvim-telescope/telescope.nvim",
+		requires = {
+			"nvim-telescope/telescope-project.nvim",
+			"nvim-telescope/telescope-file-browser.nvim",
+		}
+	}
 	-- Commenting ----------------------------------------------------------------
 	use { "numToStr/Comment.nvim" }
 	-- Orgmode -------------------------------------------------------------------
-	use { "nvim-orgmode/orgmode" }
+	use { "nvim-orgmode/orgmode"}
 	-- Which-key -----------------------------------------------------------------
 	use { "folke/which-key.nvim" }
+	-- Startup screen ------------------------------------------------------------
+	use { "goolord/alpha-nvim" }
+	use { "kyazdani42/nvim-web-devicons" }
 	------------------------------------------------------------------------------
 end)
 
@@ -230,7 +250,11 @@ vim.wo.wrap = false
 vim.diagnostic.config {
 	virtual_text = false,
 	signs = true,
-	float = { border = "single" },
+	float = {
+		border = "single",
+		severity_sort = true,
+		close_events = { 'BufLeave', 'CursorMoved', 'InsertEnter', 'FocusLost' },
+	},
 	severity_sort = true,
 	update_in_insert = true,
 }
@@ -278,6 +302,15 @@ vim.api.nvim_exec(
 vim.cmd [[autocmd BufWritePre * %s/\s\+$//e]]
 -- remove trailing newline
 vim.cmd [[autocmd BufWritePre * %s/\n\+\%$//e]]
+
+-- tsconfig files should have jsonc syntax highlighting (they allow comments)
+vim.api.nvim_create_autocmd("BufNewFile,BufRead", {
+    pattern = "tsconfig*.json",
+    callback = function(args)
+			vim.bo.filetype = "jsonc"
+    end,
+    desc = "Set perceived filetype of tsconfig files to jsonc",
+})
 
 -- set wrap for specific filetypes *only*
 vim.api.nvim_exec(

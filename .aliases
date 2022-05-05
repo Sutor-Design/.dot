@@ -18,3 +18,5 @@ alias vi="nvim"
 
 # Open a test version of Nvim with a custom config for developing
 alias customvim='export XDG_DATA_HOME=$HOME/.config/CUSTOM/CUSTOM_DATA; export XDG_CONFIG_HOME=$HOME/.config/CUSTOM; nvim'
+
+alias luamake=/Users/daniel.couper/.local/lua-language-server/3rd/luamake/luamake

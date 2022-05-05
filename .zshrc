@@ -87,8 +87,7 @@ source $HOME/.zprofile
 bindkey -v
 
 # Env vars
-export GITHUB_PACKAGES_READ_WRITE_TOKEN=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
-
+export GITHUB_PACKAGES_READ_WRITE_TOKEN=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
 # Use a shorter username (rather than dancouperblahblah-mycomputertypeblahblah)
 DEFAULT_USER=$(whoami)
 
@@ -134,11 +133,7 @@ source $ASDF_DIR/asdf.sh
 # see https://github.com/starship/starship
 eval "$(starship init zsh)"
 
-alias luamake=/Users/daniel.couper/.local/lua-language-server/3rd/luamake/luamake
-
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
-
-alias g++='g++ -std=c++11'
 
 
 # BEGIN_KITTY_SHELL_INTEGRATION

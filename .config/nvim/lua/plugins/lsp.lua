@@ -1,14 +1,15 @@
--- local lsp = require("lspconfig")
+local lsp = vim.lsp
+-- local lsp_installer = require "nvim-lsp-installer"
 local lsp_installer_servers = require "nvim-lsp-installer.servers"
 local lsp_cmp = require "cmp_nvim_lsp"
 local schemastore = require "schemastore"
 
+
+local lsp_capabilities = lsp.protocol.make_client_capabilities()
+lsp_capabilities.textDocument.completion.completionItem.snippetSupport = true
+
 local on_attach = function(client, bufnr)
 	vim.api.nvim_buf_set_option(bufnr, "omnifunc", "v:lua.vim.lsp.omnifunc")
-
-	if client.resolved_capabilities.document_formatting then
-		vim.api.nvim_command [[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
-	end
 
 	local opts = { buffer = bufnr }
 	-- stylua: ignore start
@@ -42,10 +43,39 @@ local organize_imports = function()
 	vim.lsp.buf.execute_command(params)
 end
 
-local lsp_capabilities = vim.lsp.protocol.make_client_capabilities()
-lsp_capabilities.textDocument.completion.completionItem.snippetSupport = true
-
 local servers = {
+	eslint = {
+		on_attach = on_attach,
+		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
+		settings = {
+			validate = 'on',
+			packageManager = 'npm',
+			useESLintClass = false,
+			codeActionOnSave = {
+				enable = false,
+				mode = 'all',
+			},
+			format = false,
+			quiet = false,
+			onIgnoredFiles = 'off',
+			rulesCustomizations = {},
+			run = 'onType',
+			-- nodePath configures the directory in which the eslint server should start its node_modules resolution.
+			-- This path is relative to the workspace folder (root dir) of the server instance.
+			nodePath = '',
+			-- use the workspace folder location or the file location (if no workspace folder is open) as the working directory
+			workingDirectory = { mode = 'location' },
+			codeAction = {
+				disableRuleComment = {
+					enable = true,
+					location = 'separateLine',
+				},
+				showDocumentation = {
+					enable = true,
+				},
+			},
+		},
+	},
 	jsonls = {
 		on_attach = on_attach,
 		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
@@ -103,13 +133,3 @@ for server, server_setup in next, servers, nil do
 		end
 	end
 end
-
-vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-	vim.lsp.diagnostic.on_publish_diagnostics,
-	{
-		underline = true,
-		virtual_text = true,
-		signs = true,
-		update_in_insert = false,
-	}
-)

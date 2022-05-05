@@ -23,11 +23,12 @@ M.setup = function()
 	add("comment")
 	add("lsp")
 	add("luasnip")
-	add("null-ls")
+	-- add("null-ls")
 	add("org")
 	add("telescope")
 	add("treesitter")
 	add("which-key")
+	add("alpha")
 end
 
 return M
