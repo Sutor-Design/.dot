@@ -4,7 +4,6 @@ local lsp_installer_servers = require "nvim-lsp-installer.servers"
 local lsp_cmp = require "cmp_nvim_lsp"
 local schemastore = require "schemastore"
 
-
 local lsp_capabilities = lsp.protocol.make_client_capabilities()
 lsp_capabilities.textDocument.completion.completionItem.snippetSupport = true
 
@@ -44,6 +43,23 @@ local organize_imports = function()
 end
 
 local servers = {
+	cssls = {
+		on_attach = on_attach,
+		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
+	},
+	denols = {
+		on_attach = on_attach,
+		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
+		root_dir = root_pattern("mod.ts", "mod.js", "deno.json", "deno.jsonc"),
+	},
+	elixirls = {
+		on_attach = on_attach,
+		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
+	},
+	erlangls = {
+		on_attach = on_attach,
+		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
+	},
 	eslint = {
 		on_attach = on_attach,
 		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
@@ -75,6 +91,10 @@ local servers = {
 				},
 			},
 		},
+	},
+	html = {
+		on_attach = on_attach,
+		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
 	},
 	jsonls = {
 		on_attach = on_attach,
