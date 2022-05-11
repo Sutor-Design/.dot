@@ -4,8 +4,7 @@
 -- danielcouper.sutor@gmail.com
 -- https://github.com/DanCouper
 --
--- NOTE: Requires HEAD (currently on v0.7). Probably. Some stuff might break if
--- not on HEAD but whatever, YOLO.
+-- NOTE: Requires v7+ of Nvim
 -- NOTE: Cribbed from a number of sources, in particular:
 --       - https://github.com/mjlbach/defaults.nvim
 --       - https://github.com/neovim/nvim-lspconfig/wiki
@@ -130,6 +129,8 @@ require("packer").startup(function(use)
 	use { "goolord/alpha-nvim" }
 	use { "kyazdani42/nvim-web-devicons" }
 	------------------------------------------------------------------------------
+	-- Colourizing of HEX/RGB/etc ------------------------------------------------
+	use { "norcalli/nvim-colorizer.lua" }
 end)
 
 -- for plugins that use `setup`:
@@ -287,6 +288,8 @@ vim.cmd [[set shortmess+=c]]
 -- =============================================================================
 -- {{{ Commands
 -- =============================================================================
+vim.api.nvim_create_user_command("ToggleWordWrap", "set wrap!", {});
+
 -- Highlight on yank
 vim.api.nvim_exec(
 	[[
@@ -325,35 +328,46 @@ vim.api.nvim_exec(
 -- =============================================================================
 -- {{{ Keymaps
 -- =============================================================================
--- don't break across lines, thanx:
--- stylua: ignore start
 -- Remap space as leader key
 vim.keymap.set( "", "<Space>", "<Nop>")
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
--- Copy/pasting help
-vim.keymap.set("v", [[<Leader>y]], [["+y]], { desc = "Copy to system clipboard" })
-vim.keymap.set("v", [[<Leader>p]], [["+p]], { desc = "Paste contents of system clipboard below" })
-vim.keymap.set("v", [[<Leader>P]], [["+P]], { desc = "Paste contents of system clipboard above" })
--- A few commands for quickly accessing and saving Neovim config
-vim.keymap.set("n", [[<Leader>ve]], [[:e $MYVIMRC<Cr>]], { desc = "Edit Neovim's init.lua" })
-vim.keymap.set("n", [[<Leader>vE]], [[:view $MYVIMRC<Cr>]], { desc = "Open Neovim's init.lua in read-only mode" })
-vim.keymap.set("n", [[<Leader>vs]], [[:w<Cr> :luafile $MYVIMRC<Cr>]], { desc = "Save and reload Neovim's init.lua file" })
-vim.keymap.set("n", [[<Leader>vx]], [[<Cmd>lua require("plugins.telescope").find_config_files()<CR>]], { desc = "Telescope into Neovim's config directory" })
--- keep the cursor in the same place when using n, n and j so it does't go radge
--- and jump around the screen
--- vim.keymap.set("n", "nzzzv", "n")
--- vim.keymap.set("n", "nzzzv", "n")
--- vim.keymap.set("n", "mzj`z", "j")
--- Telescope mappings
-vim.keymap.set("n", "<Leader>ff", [[<Cmd>lua require("plugins.telescope").find_files()<Cr>]], { desc = "Telescope files in cwd" })
-vim.keymap.set("n", "<Leader>fg", [[<Cmd>lua require("plugins.telescope").live_grep()<Cr>]], { desc = "Grep files in cwd" })
-vim.keymap.set("n", "<Leader><Space>", [[<Cmd>lua require("plugins.telescope").buffers()<Cr>]], { desc = "Show currently open buffers in window" })
-vim.keymap.set("n", "<Leader>fh", [[<Cmd>lua require("plugins.telescope").help_tags()<Cr>]], { desc = "Search [n]vim help tags" })
-vim.keymap.set("n", "<Leader>fo", [[<Cmd>lua require("plugins.telescope").recent_files()<Cr>]], { desc = "List recently opened files" })
-vim.keymap.set("n", "<Leader>fp", [[<Cmd>lua require("plugins.telescope").projects()<Cr>]], { desc = "List projects" })
-vim.keymap.set("n", "<Leader>fb", [[<Cmd>lua require("plugins.telescope").file_browser()<Cr>]], { desc = "Browse files in a popup" })
+
+-- stylua: ignore start
+local leader_vmaps = {
+	-- Copy/pasting help
+	["y"] = { cmd = [["+y]], desc = "Copy to system clipboard" },
+	["p"] = { cmd = [["+p]], desc = "Paste contents of system clipboard below" },
+	["P"] = { cmd = [["+P]], desc = "Paste contents of system clipboard above" },
+}
+
+local leader_nmaps = {
+	-- A few commands for quickly accessing and saving Neovim config
+	["ve"] = { cmd = [[:e $MYVIMRC<Cr>]], desc = "Edit Neovim's init.lua" },
+	["vE"] = { cmd = [[:view $MYVIMRC<Cr>]], desc = "Open Neovim's init.lua in read-only mode" },
+	["vs"] = { cmd = [[:w<Cr> :luafile $MYVIMRC<Cr>]], desc = "Save and reload Neovim's init.lua file" },
+	["vx"] = { cmd = [[<Cmd>lua require("plugins.telescope").find_config_files()<CR>]], desc = "Telescope into Neovim's config directory" },
+	-- Telescope mappings
+	["ff"] = { cmd = [[<Cmd>lua require("plugins.telescope").find_files()<Cr>]], desc = "Telescope files in cwd" },
+	["fg"] = { cmd = [[<Cmd>lua require("plugins.telescope").live_grep()<Cr>]], desc = "Grep files in cwd" },
+	["<Space>"] = { cmd = [[<Cmd>lua require("plugins.telescope").buffers()<Cr>]], desc = "Show currently open buffers in window" },
+	["fh"] = { cmd = [[<Cmd>lua require("plugins.telescope").help_tags()<Cr>]], desc = "Search [n]vim help tags" },
+	["fo"] = { cmd = [[<Cmd>lua require("plugins.telescope").recent_files()<Cr>]], desc = "List recently opened files" },
+	["fp"] = { cmd = [[<Cmd>lua require("plugins.telescope").projects()<Cr>]], desc = "List projects" },
+	["fb"] = { cmd = [[<Cmd>lua require("plugins.telescope").file_browser()<Cr>]], desc = "Browse files in a popup" },
+	-- Toggles
+	["tw"] = { cmd = [[<Cmd>ToggleWordWrap<Cr>]], desc = "Toggle word wrap" },
+	["tc"] = { cmd = [[<Cmd>ColorizerToggle<Cr>]], desc = "Toggle HEX/RGB/etc colour highlighting in buffer" },
+}
 -- stylua: ignore end
+
+for mapping, conf in pairs(leader_vmaps) do
+	vim.keymap.set("v", "<Leader>" .. mapping, conf.cmd, { desc = conf.desc })
+end
+
+for mapping, conf in pairs(leader_nmaps) do
+	vim.keymap.set("n", "<Leader>" .. mapping, conf.cmd, { desc = conf.desc })
+end
 -- =============================================================================
 -- }}}
 -- =============================================================================

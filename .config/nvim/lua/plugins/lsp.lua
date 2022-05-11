@@ -1,6 +1,7 @@
 local lsp = vim.lsp
--- local lsp_installer = require "nvim-lsp-installer"
-local lsp_installer_servers = require "nvim-lsp-installer.servers"
+local lspconfig = require "lspconfig"
+local lsp_utils = require "lspconfig.util"
+local lsp_installer = require "nvim-lsp-installer"
 local lsp_cmp = require "cmp_nvim_lsp"
 local schemastore = require "schemastore"
 
@@ -43,26 +44,13 @@ local organize_imports = function()
 end
 
 local servers = {
-	cssls = {
-		on_attach = on_attach,
-		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
-	},
+	cssls = {},
 	denols = {
-		on_attach = on_attach,
-		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
-		root_dir = root_pattern("mod.ts", "mod.js", "deno.json", "deno.jsonc"),
+		root_dir = lsp_utils.root_pattern("mod.ts", "mod.js", "deno.json", "deno.jsonc"),
 	},
-	elixirls = {
-		on_attach = on_attach,
-		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
-	},
-	erlangls = {
-		on_attach = on_attach,
-		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
-	},
+	elixirls = {},
+	erlangls = {},
 	eslint = {
-		on_attach = on_attach,
-		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
 		settings = {
 			validate = 'on',
 			packageManager = 'npm',
@@ -92,13 +80,8 @@ local servers = {
 			},
 		},
 	},
-	html = {
-		on_attach = on_attach,
-		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
-	},
+	html = {},
 	jsonls = {
-		on_attach = on_attach,
-		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
 		settings = {
 			json = {
 				schemas = schemastore.json.schemas(),
@@ -106,8 +89,6 @@ local servers = {
 		}
 	},
 	sumneko_lua = {
-		on_attach = on_attach,
-		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
 		settings = {
 			Lua = {
 				diagnostics = {
@@ -122,13 +103,8 @@ local servers = {
 			},
 		},
 	},
-	tailwindcss = {
-		on_attach = on_attach,
-		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
-	},
+	tailwindcss = {},
 	tsserver = {
-		on_attach = on_attach,
-		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
 		commands = {
 			OrganizeImports = {
 				organize_imports,
@@ -138,18 +114,15 @@ local servers = {
 	},
 }
 
-for server, server_setup in next, servers, nil do
-	local server_available, requested_server = lsp_installer_servers.get_server(
-		server
-	)
-	if server_available then
-		requested_server:on_ready(function()
-			requested_server:setup(server_setup)
-		end)
-
-		if not requested_server:is_installed() then
-			-- Queue the server to be installed
-			requested_server:install()
-		end
+lsp_installer.setup({})
+for server_name, additional_server_setup in pairs(servers) do
+	local setup_options = {
+		on_attach = on_attach,
+		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
+	}
+	for k, v in pairs(additional_server_setup) do
+		setup_options[k] = v
 	end
+
+	lspconfig[server_name].setup(setup_options)
 end

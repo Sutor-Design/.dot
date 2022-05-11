@@ -28,6 +28,7 @@ M.setup = function()
 	add("treesitter")
 	add("which-key")
 	add("alpha")
+	add("colorizer")
 end
 
 return M
