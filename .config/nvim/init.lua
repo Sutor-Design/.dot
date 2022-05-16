@@ -3,81 +3,69 @@
 -- Dan Couper
 -- danielcouper.sutor@gmail.com
 -- https://github.com/DanCouper
---
 -- NOTE: Requires v7+ of Nvim
--- NOTE: Cribbed from a number of sources, in particular:
---       - https://github.com/mjlbach/defaults.nvim
---       - https://github.com/neovim/nvim-lspconfig/wiki
---       - https://github.com/mukeshsoni/config/blob/master/.config/nvim/init.lua
---       - https://github.com/evantravers/dotfiles/blob/master/nvim/.config/nvim/init.lua
---       - https://neovim.discourse.group/t/the-300-line-init-lua-challenge/227
---       - https://github.com/nanotee/nvim-lua-guide/
---			 - https://gist.github.com/ammarnajjar/3bdd9236cf62513a79db20520ba8467d
---			 - https://github.com/tjdevries/config_manager/blob/master/xdg_config/nvim/lua/tj/plugins.lua
---			 - https://github.com/creativenull/dotfiles (see particularly the way plugin setup works)
+
+-- =============================================================================
+-- Prior Art
+-- =============================================================================
+-- https://github.com/mjlbach/defaults.nvim
+-- https://github.com/neovim/nvim-lspconfig/wiki
+-- https://github.com/mukeshsoni/config/blob/master/.config/nvim/init.lua
+-- https://github.com/evantravers/dotfiles/blob/master/nvim/.config/nvim/init.lua
+-- https://neovim.discourse.group/t/the-300-line-init-lua-challenge/227
+-- https://github.com/nanotee/nvim-lua-guide/
+-- https://gist.github.com/ammarnajjar/3bdd9236cf62513a79db20520ba8467d
+-- https://github.com/tjdevries/config_manager/blob/master/xdg_config/nvim/lua/tj/plugins.lua
+-- https://github.com/creativenull/dotfiles (see particularly the way plugin setup works)
+-- =============================================================================
+-- Utilities
+-- =============================================================================
+-- REVIEW: So, if I use this instead of the standard `require` it'll make sure my modules are executed everytime I source $MYVIMRC.
+-- cribbed from https://www.reddit.com/r/neovim/comments/um3epn/comment/i7zf32l/?utm_source=share&utm_medium=web2x&context=3
+-- Issue is that if used for LSP stuff (for example) it goes into a loop and keeps adding clients over and over.
+local load = function(mod)
+  package.loaded[mod] = nil
+  return require(mod)
+end
 -- =============================================================================
 -- {{{ Plugins
 -- =============================================================================
+-- [Packer](https://github.com/wbthomason/packer.nvim) is used to manage plugins. Because some options, commands and keymaps are based on certain plugins being installed, this is the first item configured.
+-- Packer itself will automatically self-install and set itself up on any machine this configuration is cloned to -- this is copied directly from [the Packer README](https://github.com/wbthomason/packer.nvim#bootstrapping).
 -- Automatically ensure that Packer installs itself if it isn't already present.
-local install_path = vim.fn.stdpath "data"
-	.. "/site/pack/packer/start/packer.nvim"
+local install_path = vim.fn.stdpath('data')..'/site/pack/packer/start/packer.nvim'
+local packer_bootstrap = nil
 
 if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
-	vim.fn.execute(
-		"!git clone https://github.com/wbthomason/packer.nvim " .. install_path
-	)
+  packer_bootstrap = vim.fn.system({'git', 'clone', '--depth', '1', 'https://github.com/wbthomason/packer.nvim', install_path})
 end
-
-vim.api.nvim_exec(
-	[[
-		augroup Packer
-			autocmd!
-			autocmd BufWritePost init.lua PackerCompile
-		augroup end
-	]],
-	false
-)
 -- ...then define plugins
-require("packer").startup(function(use)
-	-- Packer --------------------------------------------------------------------
-	-- NOTE: Package manager written in Lua. Add packages here. Save. Run
-	-- `:source %`. Run `:PackerSync`.
+require("packer").startup(function()
 	use { "wbthomason/packer.nvim" }
-	-- Plenary -------------------------------------------------------------------
+	-- Useful utility/profiling/debugging tools for Neovim itself:
 	use { "nvim-lua/plenary.nvim" }
-	-- Profiling etc -------------------------------------------------------------
-	-- NOTE: Stuff here is for dev on Nvim only, not important to actual editing
 	use { "dstein64/vim-startuptime" }
-	-- Colour theme --------------------------------------------------------------
-	-- NOTE: Using Lush to build this. It has a nice DSL that allows for live
-	-- updating, and there's a build tool that can then generate output for
-	-- loads of other things (eg, creating a terminal theme). The downside is
-	-- that to make use of it, the theme needs to be a plugin, so that's
-	-- stored at `./sutor_theme.nvim/`. To get live updating when developing, open
-	-- a buffer with the theme file and run `:Lushify<Cr>`
+	-- The theme itself is built using Lush. It has a nice DSL that allows for live updating, and there's a build tool that can then generate output for loads of other things (eg, creating a terminal theme). The downside is that to make use of it, the theme needs to be a plugin, so that's stored at `./sutor_theme.nvim/`. To get live updating when developing, open a buffer with the theme file and run `:Lushify<Cr>`
 	use { "rktjmp/lush.nvim" }
 	use {
 		"~/.config/nvim/sutor_theme.nvim",
 		as = "colorscheme",
 	}
-	-- New NVim UI ---------------------------------------------------------------
-	-- NOTE: NVim is *starting* to implement UI stuff. It's a little raw atm, but
-	-- there are a few plugin authors making it all a bit more approachable.
-	-- IMPORTANT: this stuff a. requires somewhat bleeding-edge version of NVim,
-	-- and b. is going to go out of date pretty quickly, so be careful.
-	-- use { "stevearc/dressing.nvim" }
-	-- Editorconfig --------------------------------------------------------------
-	-- NOTE: editorconfig keeps text editor config consistent across machines and
-	-- means I don't have to specify the tab/space size in the vim config.
+	-- Which-key pops up a little UI on keypresses in normal/visual modes to show the available options. Not necessary, just nice-to-have.
+	use { "folke/which-key.nvim" }
+	-- Startup screen: a bit pointless but I like having it there.
+	use { "goolord/alpha-nvim" }
+	use { "kyazdani42/nvim-web-devicons" }
+	-- Editorconfig keeps text editor config consistent across machines and means I don't have to specify the tab/space size in the vim config.
 	use { "editorconfig/editorconfig-vim" }
-	-- Treesitter ----------------------------------------------------------------
-	-- NOTE: setting it to auto run update. Otherwise need to ensure that
-	-- treesitter packages are installed for each language, treesitter itself
-	-- won't do anything otherwise.
+	-- Comment makes it easy to add/remove language-specific comments.
+	use { "numToStr/Comment.nvim" }
+	-- Colorizer automatically highlights Hex/RGB/etc colours; too useful for CSS work to leave out.
+	use { "norcalli/nvim-colorizer.lua" }
+	-- Treesitter + some treesitter-powered extras for syntax highlighting. This requires tree-sitter be installed on the machine.
 	use {
 		"nvim-treesitter/nvim-treesitter",
 		requires = {
-			-- Plus some treesitter-powered stuff, just testing!
 			"nvim-treesitter/nvim-tree-docs",
 			-- REVIEW: this adds some virtual text showing the current context after the
 			-- current block, function etc. This may be annoying, but should be v helpful
@@ -85,33 +73,26 @@ require("packer").startup(function(use)
 			"haringsrob/nvim_context_vt",
 		}
 	}
-	-- Language servers ----------------------------------------------------------
-	-- NOTE: This gets a bit complicated the more functionality I add, so
-	-- delegating the configs to a separate module. nvim-lsp-installer is a
-	-- companion to lspconfig; provides utilities for [auto] installing language
-	-- servers (not *necessarily* a great idea, but I'll stick with it for now).
+	-- Language server functionality. `nvim-lsp-installer` is a companion to `lspconfig`: it provides utilities for [auto] installing language servers (not *necessarily* a great idea, but I'll stick with it for now).
+	-- A few language servers have additional requirements. In this case, the `schemastore` plugin is used to pull in JSON/YAML schemas for the JSON language server.
 	use { "neovim/nvim-lspconfig" }
 	use { "williamboman/nvim-lsp-installer" }
 	use { "b0o/schemastore.nvim" }
-	-- Completions & Snippets ----------------------------------------------------
-	-- NOTE: Bit of a faff to set up; cmp is the core autocomplete plugin, but
-	-- then need a lod of other stuff to get plugins &c.
-	-- NOTE: Snippets have been commented out rather than completely removed;
-	-- just testing to see if I miss them. They are extremely annoying at times,
-	-- so if I can nix them, then good.
+	-- Completions & snippets are a bit of a faff to set up; cmp is the core autocomplete plugin, but that needs a load of other stuff to cover a variety of autocomplete needs.
 	use {
 		"hrsh7th/nvim-cmp",
 		requires = {
 			"hrsh7th/cmp-nvim-lsp",
+			"hrsh7th/cmp-nvim-lua",
 			"hrsh7th/cmp-buffer",
 			"hrsh7th/cmp-path",
 			"saadparwaiz1/cmp_luasnip",
 			"onsails/lspkind-nvim",
 			"l3mon4d3/luasnip",
-			-- "rafamadriz/friendly-snippets",
+			"rafamadriz/friendly-snippets",
 		}
 	}
-	-- Fuzzy find ----------------------------------------------------------------
+	-- Telescope is used to find stuff.
 	use {
 		"nvim-telescope/telescope.nvim",
 		requires = {
@@ -119,29 +100,35 @@ require("packer").startup(function(use)
 			"nvim-telescope/telescope-file-browser.nvim",
 		}
 	}
-	-- Commenting ----------------------------------------------------------------
-	use { "numToStr/Comment.nvim" }
-	-- Orgmode -------------------------------------------------------------------
+	-- Orgmode is used to organise stuff. Not a patch on the Emacs original it would seem, but necessary.
+	-- NOTE: Orgzly should be installed on any mobile devices (and everything should be synced between machines).
 	use { "nvim-orgmode/orgmode"}
-	-- Which-key -----------------------------------------------------------------
-	use { "folke/which-key.nvim" }
-	-- Startup screen ------------------------------------------------------------
-	use { "goolord/alpha-nvim" }
-	use { "kyazdani42/nvim-web-devicons" }
-	------------------------------------------------------------------------------
-	-- Colourizing of HEX/RGB/etc ------------------------------------------------
-	use { "norcalli/nvim-colorizer.lua" }
+
+	-- Finally, sync Packer if it's been bootstrapped and close off the setup function.
+	if packer_bootstrap then
+    require('packer').sync()
+  end
 end)
 
--- for plugins that use `setup`:
-require("plugins").setup()
+-- for plugins that require setup, delegate to seperate modules:
+require("plugin-setup/cmp")
+require("plugin-setup/comment")
+require("plugin-setup/lsp")
+require("plugin-setup/luasnip")
+require("plugin-setup/org")
+require("plugin-setup/telescope")
+require("plugin-setup/treesitter")
+require("plugin-setup/which-key")
+require("plugin-setup/alpha")
+require("plugin-setup/colorizer")
 -- }}}
 -- =============================================================================
 -- {{{ Theme
 -- =============================================================================
 -- Need termguicolors set to get owt fancy
-vim.env.nvim_tui_enable_true_color = 1
 vim.o.termguicolors = true
+vim.env.nvim_tui_enable_true_color = 1
+-- require("sutor-dark-theme")
 vim.cmd [[ colorscheme sutor_dark]]
 -- }}}
 -- =============================================================================
@@ -219,10 +206,6 @@ vim.wo.signcolumn = "yes"
 -- in the sign column, I want diagnostic hints to be a symbol, with colour
 -- denoting level; I don't really like the default letter.
 local signs = {
-	-- { name = "DiagnosticSignError", text = "" },
-	-- { name = "DiagnosticSignWarn", text = "" },
-	-- { name = "DiagnosticSignHint", text = "" },
-	-- { name = "DiagnosticSignInfo", text = "" },
 	{ name = "DiagnosticSignError", text = "※" },
 	{ name = "DiagnosticSignWarn", text = "※" },
 	{ name = "DiagnosticSignHint", text = "※" },
@@ -288,48 +271,71 @@ vim.cmd [[set shortmess+=c]]
 -- =============================================================================
 -- {{{ Commands
 -- =============================================================================
-vim.api.nvim_create_user_command("ToggleWordWrap", "set wrap!", {});
+local usercmd = vim.api.nvim_create_user_command
+local augroup = vim.api.nvim_create_augroup
+local autocmd = vim.api.nvim_create_autocmd
 
--- Highlight on yank
-vim.api.nvim_exec(
-	[[
-		augroup YankHighlight
-			autocmd!
-			autocmd TextYankPost * silent! lua vim.highlight.on_yank()
-		augroup end
-	]],
-	false
-)
--- remove trailing whitespaces
-vim.cmd [[autocmd BufWritePre * %s/\s\+$//e]]
--- remove trailing newline
-vim.cmd [[autocmd BufWritePre * %s/\n\+\%$//e]]
+usercmd("ToggleWordWrap", "set wrap!", {});
 
--- tsconfig files should have jsonc syntax highlighting (they allow comments)
-vim.api.nvim_create_autocmd("BufNewFile,BufRead", {
-    pattern = "tsconfig*.json",
-    callback = function(args)
-			vim.bo.filetype = "jsonc"
-    end,
-    desc = "Set perceived filetype of tsconfig files to jsonc",
+augroup("Configs", { clear = true })
+augroup("BufferUIEffects", { clear = true })
+augroup("FileCleanupOnSave", { clear = true })
+
+local nvim_config_filepaths = {
+	os.getenv("HOME") .. "/.config/nvim/init.lua",
+	os.getenv("HOME") .. "/.config/nvim/lua/plugins/*.lua",
+	".nvimrc.lua"
+}
+
+-- autocmd({ "BufWritePost" }, {
+-- 	group = "Configs",
+-- 	pattern = nvim_config_filepaths,
+-- 	callback = function() vim.cmd("PackerCompile") end,
+-- 	desc = "Ensure all plugins are up-to-date when any Neovim config files are saved",
+-- })
+
+autocmd({ "BufWritePost" }, {
+    group = "Configs",
+    pattern = nvim_config_filepaths,
+    command = "source $MYVIMRC",
+		desc = "Source Neovim config files when they are saved.",
 })
 
--- set wrap for specific filetypes *only*
-vim.api.nvim_exec(
-	[[
-		augroup WrapLineInProseFiles
-			autocmd!
-			autocmd FileType md setlocal wrap
-		augroup END
-	]],
-	false
-)
+autocmd({ "TextYankPost" }, {
+	group = "BufferUIEffects",
+	pattern = "*",
+	callback = function() vim.highlight.on_yank({ on_visual = true }) end,
+	desc = "Highlight on yank",
+})
+
+autocmd({ "BufNewFile", "BufRead" }, {
+	pattern = "tsconfig*.json",
+	callback = function()
+			vim.bo.filetype = "jsonc"
+	end,
+	desc = "Set perceived filetype of tsconfig files to jsonc",
+})
+
+autocmd({ "BufWritePre" }, {
+	group = "FileCleanupOnSave",
+	pattern = "*",
+	command = [[%s/\s\+$//e]],
+	desc = "Remove trailing whitespace"
+})
+
+autocmd({ "BufWritePre" }, {
+	group = "FileCleanupOnSave",
+	pattern = "*",
+	command = [[%s/\n\+\%$//e]],
+	desc = "Remove trailing newline"
+})
 -- }}}
 -- =============================================================================
 -- {{{ Keymaps
 -- =============================================================================
+local keymap = vim.keymap.set
 -- Remap space as leader key
-vim.keymap.set( "", "<Space>", "<Nop>")
+keymap( "", "<Space>", "<Nop>")
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
@@ -346,15 +352,15 @@ local leader_nmaps = {
 	["ve"] = { cmd = [[:e $MYVIMRC<Cr>]], desc = "Edit Neovim's init.lua" },
 	["vE"] = { cmd = [[:view $MYVIMRC<Cr>]], desc = "Open Neovim's init.lua in read-only mode" },
 	["vs"] = { cmd = [[:w<Cr> :luafile $MYVIMRC<Cr>]], desc = "Save and reload Neovim's init.lua file" },
-	["vx"] = { cmd = [[<Cmd>lua require("plugins.telescope").find_config_files()<CR>]], desc = "Telescope into Neovim's config directory" },
-	-- Telescope mappings
-	["ff"] = { cmd = [[<Cmd>lua require("plugins.telescope").find_files()<Cr>]], desc = "Telescope files in cwd" },
-	["fg"] = { cmd = [[<Cmd>lua require("plugins.telescope").live_grep()<Cr>]], desc = "Grep files in cwd" },
-	["<Space>"] = { cmd = [[<Cmd>lua require("plugins.telescope").buffers()<Cr>]], desc = "Show currently open buffers in window" },
-	["fh"] = { cmd = [[<Cmd>lua require("plugins.telescope").help_tags()<Cr>]], desc = "Search [n]vim help tags" },
-	["fo"] = { cmd = [[<Cmd>lua require("plugins.telescope").recent_files()<Cr>]], desc = "List recently opened files" },
-	["fp"] = { cmd = [[<Cmd>lua require("plugins.telescope").projects()<Cr>]], desc = "List projects" },
-	["fb"] = { cmd = [[<Cmd>lua require("plugins.telescope").file_browser()<Cr>]], desc = "Browse files in a popup" },
+	["vx"] = { cmd = require("plugin-setup.telescope").find_config_files, desc = "Telescope into Neovim's config directory" },
+	-- require("plugin-setup.telescope") mappings
+	["ff"] = { cmd = require("plugin-setup.telescope").find_files, desc = "Telescope files in cwd" },
+	["fg"] = { cmd = require("plugin-setup.telescope").live_grep, desc = "Grep files in cwd" },
+	["<Space>"] = { cmd = require("plugin-setup.telescope").buffers, desc = "Show currently open buffers in window" },
+	["fh"] = { cmd = require("plugin-setup.telescope").help_tags, desc = "Search [n]vim help tags" },
+	["fo"] = { cmd = require("plugin-setup.telescope").recent_files, desc = "List recently opened files" },
+	["fp"] = { cmd = require("plugin-setup.telescope").projects, desc = "List projects" },
+	["fb"] = { cmd = require("plugin-setup.telescope").file_browser, desc = "Browse files in a popup" },
 	-- Toggles
 	["tw"] = { cmd = [[<Cmd>ToggleWordWrap<Cr>]], desc = "Toggle word wrap" },
 	["tc"] = { cmd = [[<Cmd>ColorizerToggle<Cr>]], desc = "Toggle HEX/RGB/etc colour highlighting in buffer" },
@@ -362,11 +368,11 @@ local leader_nmaps = {
 -- stylua: ignore end
 
 for mapping, conf in pairs(leader_vmaps) do
-	vim.keymap.set("v", "<Leader>" .. mapping, conf.cmd, { desc = conf.desc })
+	keymap("v", "<Leader>" .. mapping, conf.cmd, { desc = conf.desc })
 end
 
 for mapping, conf in pairs(leader_nmaps) do
-	vim.keymap.set("n", "<Leader>" .. mapping, conf.cmd, { desc = conf.desc })
+	keymap("n", "<Leader>" .. mapping, conf.cmd, { desc = conf.desc })
 end
 -- =============================================================================
 -- }}}

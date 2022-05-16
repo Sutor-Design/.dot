@@ -117,11 +117,15 @@ local servers = {
 lsp_installer.setup({})
 for server_name, additional_server_setup in pairs(servers) do
 	local setup_options = {
-		on_attach = on_attach,
 		capabilities = lsp_cmp.update_capabilities(lsp_capabilities),
 	}
+
 	for k, v in pairs(additional_server_setup) do
 		setup_options[k] = v
+	end
+
+	if setup_options.on_attach == nil then
+		setup_options.on_attach = on_attach
 	end
 
 	lspconfig[server_name].setup(setup_options)
