@@ -18,7 +18,7 @@
 -- https://github.com/tjdevries/config_manager/blob/master/xdg_config/nvim/lua/tj/plugins.lua
 -- https://github.com/creativenull/dotfiles (see particularly the way plugin setup works)
 -- =============================================================================
--- Utilities
+-- Utilities/per-setup
 -- =============================================================================
 -- REVIEW: So, if I use this instead of the standard `require` it'll make sure my modules are executed everytime I source $MYVIMRC.
 -- cribbed from https://www.reddit.com/r/neovim/comments/um3epn/comment/i7zf32l/?utm_source=share&utm_medium=web2x&context=3
@@ -27,6 +27,9 @@ local load = function(mod)
   package.loaded[mod] = nil
   return require(mod)
 end
+-- NOTE: Colorizer.lua is doing something weird and termguicolors is showing as not being set.
+-- In an attempt to get around this, set the option prior to the plugin loading logic.
+vim.o.termguicolors = true
 -- =============================================================================
 -- {{{ Plugins
 -- =============================================================================
@@ -103,7 +106,7 @@ require("packer").startup(function()
 	-- Orgmode is used to organise stuff. Not a patch on the Emacs original it would seem, but necessary.
 	-- NOTE: Orgzly should be installed on any mobile devices (and everything should be synced between machines).
 	use { "nvim-orgmode/orgmode"}
-
+	use { "ranjithshegde/orgWiki.nvim" }
 	-- Finally, sync Packer if it's been bootstrapped and close off the setup function.
 	if packer_bootstrap then
     require('packer').sync()
@@ -125,8 +128,6 @@ require("plugin-setup/colorizer")
 -- =============================================================================
 -- {{{ Theme
 -- =============================================================================
--- Need termguicolors set to get owt fancy
-vim.o.termguicolors = true
 vim.env.nvim_tui_enable_true_color = 1
 -- require("sutor-dark-theme")
 vim.cmd [[ colorscheme sutor_dark]]
@@ -287,12 +288,22 @@ local nvim_config_filepaths = {
 	".nvimrc.lua"
 }
 
+-- FIXME: this fails with an error, don't have time to investigate atm, uncomment to see error
 -- autocmd({ "BufWritePost" }, {
 -- 	group = "Configs",
 -- 	pattern = nvim_config_filepaths,
 -- 	callback = function() vim.cmd("PackerCompile") end,
 -- 	desc = "Ensure all plugins are up-to-date when any Neovim config files are saved",
 -- })
+
+autocmd({ "BufNewFile", "BufRead" }, {
+	group = "Configs",
+	pattern = { ".workrc", ".profile" },
+	callback = function ()
+		vim.o.filetype = "sh"
+	end,
+	desc = "Set specified arbitrarily-name config files that are sourced by zsh to shell",
+})
 
 autocmd({ "BufWritePost" }, {
     group = "Configs",

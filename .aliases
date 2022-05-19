@@ -1,6 +1,6 @@
 # Poor man's Nix for OSX. Add stuff to the Brewfile that
 # needs to be there on startup.
-alias brewup='brew update; brew upgrade; brew cleanup; brew doctor'
+alias brewup='brew update; brew upgrade; brew cleanup; brew doctor; brew bundle'
 
 # Same as "clear" except that it clears the scrollback
 # buffer. This *should* work on most terminals
@@ -8,13 +8,15 @@ alias clearscreen="printf '\033[2J\033[3J\033[1;1H'"
 
 # Git alias for committing dotfiles. This technique described here:
 # https://www.atlassian.com/git/tutorials/dotfiles
-alias config='/usr/bin/git --git-dir=$HOME/.dot/ --work-tree=$HOME'
+alias config='git --git-dir=$HOME/.dot/ --work-tree=$HOME'
 
 # Make sure I don't get Vi or Vim by accident, I've spent
 # enough time configuring NVim and I'd rather have
 # access to that thanks.
 alias vim="nvim"
 alias vi="nvim"
+alias pvim="vim"
+alias pvi="vi"
 
 # Open a test version of Nvim with a custom config for developing
 alias customvim='export XDG_DATA_HOME=$HOME/.config/CUSTOM/CUSTOM_DATA; export XDG_CONFIG_HOME=$HOME/.config/CUSTOM; nvim'

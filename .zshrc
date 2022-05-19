@@ -1,7 +1,14 @@
 # If you come from bash you might have to change your $PATH.
 export PATH=$HOME/bin:$HOME/.asdf:/usr/local/bin:$PATH
+
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
+
+# Source additional environment variables if a `.profiles` file exists
+ADDITIONAL_ENV_VARS=~/.profile
+if [[ -f "$ADDITIONAL_ENV_VARS" ]]; then
+	source $ADDITIONAL_ENV_VARS
+fi
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -69,7 +76,7 @@ zstyle ':omz:update' mode reminder  # just remind me to update when it's time
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git)
+plugins=(git asdf)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -80,9 +87,6 @@ source $ZSH/oh-my-zsh.sh
 # Use a shorter username (rather than dancouperblahblah-mycomputertypeblahblah)
 DEFAULT_USER=$(whoami)
 
-# ASDF
-. /opt/asdf-vm/asdf.sh
-
 # Preferred editor for local and remote sessions
 # if [[ -n $SSH_CONNECTION ]]; then
 #   export EDITOR='vim'
@@ -90,8 +94,6 @@ DEFAULT_USER=$(whoami)
 #   export EDITOR='mvim'
 # fi
 
-# Compilation flags
-# export ARCHFLAGS="-arch x86_64"
 
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
@@ -102,3 +104,12 @@ DEFAULT_USER=$(whoami)
 # I'm using the Starship shell framework, initialise it
 # see https://github.com/starship/starship
 eval "$(starship init zsh)"
+
+# Execute any work-related commands that need to happen at startup
+WORK_ENV_SETUP=~/.workrc
+if [[ -f "$WORK_ENV_SETUP" ]]; then
+	source $WORK_ENV_SETUP
+fi
+
+# Created by `pipx` on 2022-05-18 20:36:06
+export PATH="$PATH:/Users/daniel.couper/.local/bin"

@@ -17,5 +17,14 @@ require("orgmode").setup {
 		t = { description = "Task", template = "* TODO %?\n %u" },
 		n = { description = "Note", template = "* NOTE\n%?\n %u" },
 	},
-	org_default_notes_file = "~/Dropbox/Orgfiles/refile.org",
+	org_default_notes_file = "~/Dropbox/Orgfiles/refile-desktop.org",
+	win_split_mode = "float",
+}
+
+-- NOTE: following is experimental and may break at any time, at time of writing the plugin is 7 days old.
+-- It's allows a subset of VimWiki features to be used with the .org filetype.
+-- As such, belongs alongside the actual org configs.
+require("orgWiki").setup {
+	wiki_path = { "~/Dropbox/Orgfiles/" },
+	diary_path = "~/Dropbox/Orgfiles/diary/",
 }

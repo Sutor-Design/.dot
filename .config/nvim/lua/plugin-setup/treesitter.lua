@@ -16,6 +16,11 @@ local treesitter_configs = require "nvim-treesitter.configs"
 
 treesitter_configs.setup {
 	ensure_installed = "all",
+	-- Any parsers that have issues, add here
+	ignore_install = {
+		-- see https://github.com/claytonrcarter/tree-sitter-phpdoc/issues/15
+		"phpdoc",
+	},
 	highlight = {
 		enable = true,
 	},

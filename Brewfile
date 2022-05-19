@@ -2,7 +2,7 @@
 cask_args appdir: '/Applications'
 
 # Generally useful packages
-brew 'git'
+# brew 'git'
 brew 'gh'
 brew 'gpg'
 brew 'bash-completion'
@@ -10,8 +10,11 @@ brew 'coreutils'
 brew 'curl'
 brew 'tree'
 brew 'just'
+brew 'wget'
 # Cross-language version manager:
 brew 'asdf'
+# Command prompt
+brew 'starship'
 # Languages not managed by ASDF
 brew 'tcl-tk'
 # Formatters:
@@ -29,5 +32,8 @@ brew 'ripgrep'
 # Cat upgrade:
 brew 'bat'
 # Casks
-cask 'spotify'
+# cask 'spotify'
+cask 'alfred'
 cask 'amethyst'
+cask 'kitty'
+cask 'dropbox'
