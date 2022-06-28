@@ -1,6 +1,6 @@
-nodejs 18.1.0
+nodejs 18.2.0
 deno 1.21.3
-erlang 23.3.4
+erlang 24.3.4
 elixir 1.13.4-otp-23
 golang 1.18.2
 rust nightly
@@ -10,3 +10,4 @@ awscli 2.7.0
 python 3.7.13
 terraform 1.1.9
 ruby 3.1.2
+tmux 3.2

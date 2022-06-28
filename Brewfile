@@ -1,38 +1,34 @@
 # specify a directory to install
 cask_args appdir: '/Applications'
 
-# Generally useful packages
-# brew 'git'
-brew 'gh'
-brew 'gpg'
+brew 'asdf' # Cross-language version manager
 brew 'bash-completion'
+brew 'bat' # `cat` upgrade
+brew 'code-minimap' # Nice minimap implementation, can be used in text editor
 brew 'coreutils'
 brew 'curl'
-brew 'tree'
+brew 'dprint' # General-purpose formatter
+brew 'exercism' # Cross-lanauge katas
+brew 'fd' # `find` upgrade
+brew 'gcc'
+brew 'gh'
+# brew 'git'
+brew 'gpg'
+brew 'jq'
 brew 'just'
+brew 'lazygit' # Git TUI
+brew 'luajit', args: ['HEAD'] # Nvim-related. REVIEW: install via ASDF?
+brew 'neovim', args: ['HEAD'] # Nvim-related. REVIEW: install via ASDF?
+brew 'ossp-uuid'
+brew 'ripgrep' # `grep` upgrade
+brew 'starship' # Command prompt. REVIEW: install via ASDF?
+brew 'stylua' # Lue formatter
+brew 'tcl-tk' # NOTE: language not available via ASDF
+brew 'tree'
+brew 'tree-sitter', args: ['HEAD'] # Nvim-related. REVIEW: install via ASDF?
 brew 'wget'
-# Cross-language version manager:
-brew 'asdf'
-# Command prompt
-brew 'starship'
-# Languages not managed by ASDF
-brew 'tcl-tk'
-# Formatters:
-brew 'dprint'
-brew 'stylua'
-# Nvim-related:
-brew 'luajit', args: ['HEAD']
-brew 'neovim', args: ['HEAD']
-brew 'tree-sitter', args: ['HEAD']
-brew 'code-minimap'
-# `find` upgrade
-brew 'fd'
-# `grep` upgrade:
-brew 'ripgrep'
-# Cat upgrade:
-brew 'bat'
-# Casks
-# cask 'spotify'
+brew 'zlib'
+
 cask 'alfred'
 cask 'amethyst'
 cask 'kitty'

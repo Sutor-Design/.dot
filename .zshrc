@@ -1,5 +1,5 @@
 # If you come from bash you might have to change your $PATH.
-export PATH=$HOME/bin:$HOME/.asdf:/usr/local/bin:$PATH
+export PATH=$HOME/bin:$HOME/.asdf:/usr/local/bin:$HOME/.local/bin:/opt/homebrew/opt/openjdk/bin:$PATH
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -110,6 +110,3 @@ WORK_ENV_SETUP=~/.workrc
 if [[ -f "$WORK_ENV_SETUP" ]]; then
 	source $WORK_ENV_SETUP
 fi
-
-# Created by `pipx` on 2022-05-18 20:36:06
-export PATH="$PATH:/Users/daniel.couper/.local/bin"

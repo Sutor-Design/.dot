@@ -1,6 +1,3 @@
-# Poor man's Nix for OSX. Add stuff to the Brewfile that
-# needs to be there on startup.
-alias brewup='brew update; brew upgrade; brew cleanup; brew doctor; brew bundle'
 
 # Same as "clear" except that it clears the scrollback
 # buffer. This *should* work on most terminals
@@ -17,6 +14,8 @@ alias vim="nvim"
 alias vi="nvim"
 alias pvim="vim"
 alias pvi="vi"
+
+# WXWidgets installed via homebrew
 
 # Open a test version of Nvim with a custom config for developing
 alias customvim='export XDG_DATA_HOME=$HOME/.config/CUSTOM/CUSTOM_DATA; export XDG_CONFIG_HOME=$HOME/.config/CUSTOM; nvim'

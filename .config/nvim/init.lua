@@ -17,16 +17,29 @@
 -- https://gist.github.com/ammarnajjar/3bdd9236cf62513a79db20520ba8467d
 -- https://github.com/tjdevries/config_manager/blob/master/xdg_config/nvim/lua/tj/plugins.lua
 -- https://github.com/creativenull/dotfiles (see particularly the way plugin setup works)
+-- https://github.com/wimstefan/dotfiles/blob/master/config/nvim/init.lua
+-- https://github.com/ViRu-ThE-ViRuS/configs/blob/master/nvim/init.lua
+-- https://www.littlehart.net/atthekeyboard/2021/11/12/grumpy-nvim-setup/
+-- https://vonheikemen.github.io/devlog/tools/configuring-neovim-using-lua/
 -- =============================================================================
 -- Utilities/per-setup
 -- =============================================================================
--- REVIEW: So, if I use this instead of the standard `require` it'll make sure my modules are executed everytime I source $MYVIMRC.
--- cribbed from https://www.reddit.com/r/neovim/comments/um3epn/comment/i7zf32l/?utm_source=share&utm_medium=web2x&context=3
--- Issue is that if used for LSP stuff (for example) it goes into a loop and keeps adding clients over and over.
-local load = function(mod)
-  package.loaded[mod] = nil
-  return require(mod)
+local nvim_dir = os.getenv("HOME") .. "/.config/nvim"
+
+Reload = function(...)
+	return require("plenary.reload").reload_module(...)
 end
+
+R = function (name)
+	Reload(name)
+	return require(name)
+end
+
+P = function (v)
+	print(vim.inspect(v))
+	return v
+end
+
 -- NOTE: Colorizer.lua is doing something weird and termguicolors is showing as not being set.
 -- In an attempt to get around this, set the option prior to the plugin loading logic.
 vim.o.termguicolors = true
@@ -48,12 +61,15 @@ require("packer").startup(function()
 	-- Useful utility/profiling/debugging tools for Neovim itself:
 	use { "nvim-lua/plenary.nvim" }
 	use { "dstein64/vim-startuptime" }
+	use { "nvim-treesitter/playground" }
 	-- The theme itself is built using Lush. It has a nice DSL that allows for live updating, and there's a build tool that can then generate output for loads of other things (eg, creating a terminal theme). The downside is that to make use of it, the theme needs to be a plugin, so that's stored at `./sutor_theme.nvim/`. To get live updating when developing, open a buffer with the theme file and run `:Lushify<Cr>`
 	use { "rktjmp/lush.nvim" }
 	use {
 		"~/.config/nvim/sutor_theme.nvim",
 		as = "colorscheme",
 	}
+	use { "cocopon/iceberg.vim"}
+	use { "EdenEast/nightfox.nvim", tag = "v1.0.0" }
 	-- Which-key pops up a little UI on keypresses in normal/visual modes to show the available options. Not necessary, just nice-to-have.
 	use { "folke/which-key.nvim" }
 	-- Startup screen: a bit pointless but I like having it there.
@@ -61,26 +77,25 @@ require("packer").startup(function()
 	use { "kyazdani42/nvim-web-devicons" }
 	-- Editorconfig keeps text editor config consistent across machines and means I don't have to specify the tab/space size in the vim config.
 	use { "editorconfig/editorconfig-vim" }
+	-- use { "gpanders/editorconfig.nvim" }
 	-- Comment makes it easy to add/remove language-specific comments.
 	use { "numToStr/Comment.nvim" }
 	-- Colorizer automatically highlights Hex/RGB/etc colours; too useful for CSS work to leave out.
 	use { "norcalli/nvim-colorizer.lua" }
 	-- Treesitter + some treesitter-powered extras for syntax highlighting. This requires tree-sitter be installed on the machine.
-	use {
-		"nvim-treesitter/nvim-treesitter",
-		requires = {
-			"nvim-treesitter/nvim-tree-docs",
-			-- REVIEW: this adds some virtual text showing the current context after the
-			-- current block, function etc. This may be annoying, but should be v helpful
-			-- in larger codebases.
-			"haringsrob/nvim_context_vt",
-		}
-	}
+	use { "nvim-treesitter/nvim-treesitter" }
+	use { "nvim-treesitter/nvim-tree-docs" }
+	-- REVIEW: this adds some virtual text showing the current context after the
+	-- current block, function etc. This may be annoying, but should be v helpful
+	-- in larger codebases.
+	use	{ "haringsrob/nvim_context_vt" }
 	-- Language server functionality. `nvim-lsp-installer` is a companion to `lspconfig`: it provides utilities for [auto] installing language servers (not *necessarily* a great idea, but I'll stick with it for now).
 	-- A few language servers have additional requirements. In this case, the `schemastore` plugin is used to pull in JSON/YAML schemas for the JSON language server.
 	use { "neovim/nvim-lspconfig" }
 	use { "williamboman/nvim-lsp-installer" }
+	use { "mfussenegger/nvim-dap" }
 	use { "b0o/schemastore.nvim" }
+	use { "simrat39/rust-tools.nvim" }
 	-- Completions & snippets are a bit of a faff to set up; cmp is the core autocomplete plugin, but that needs a load of other stuff to cover a variety of autocomplete needs.
 	use {
 		"hrsh7th/nvim-cmp",
@@ -107,30 +122,22 @@ require("packer").startup(function()
 	-- NOTE: Orgzly should be installed on any mobile devices (and everything should be synced between machines).
 	use { "nvim-orgmode/orgmode"}
 	use { "ranjithshegde/orgWiki.nvim" }
+	-- REVIEW: in-development plugins
+	use { nvim_dir .. "/plugin-dev/sutor_keyfob.nvim" }
 	-- Finally, sync Packer if it's been bootstrapped and close off the setup function.
 	if packer_bootstrap then
     require('packer').sync()
   end
 end)
 
--- for plugins that require setup, delegate to seperate modules:
-require("plugin-setup/cmp")
-require("plugin-setup/comment")
-require("plugin-setup/lsp")
-require("plugin-setup/luasnip")
-require("plugin-setup/org")
-require("plugin-setup/telescope")
-require("plugin-setup/treesitter")
-require("plugin-setup/which-key")
-require("plugin-setup/alpha")
-require("plugin-setup/colorizer")
 -- }}}
 -- =============================================================================
 -- {{{ Theme
 -- =============================================================================
 vim.env.nvim_tui_enable_true_color = 1
--- require("sutor-dark-theme")
-vim.cmd [[ colorscheme sutor_dark]]
+-- vim.cmd [[ colorscheme iceberg]]
+vim.cmd [[colorscheme nightfox]]
+-- vim.cmd [[ colorscheme sutor_dark]]
 -- }}}
 -- =============================================================================
 -- {{{ Options
@@ -138,6 +145,26 @@ vim.cmd [[ colorscheme sutor_dark]]
 -- ----------------------------------------------------------------------------
 -- global options
 -- ----------------------------------------------------------------------------
+
+-- enable filetype.lua (opt-in, does not yet completely match all of the filetypes covered by filetype.vim)
+vim.g.do_filetype_lua = 1
+-- disable filetype.vim
+vim.g.did_load_filetypes = 0
+-- additional filetype detection
+vim.filetype.add({
+  extension = {
+    conf = "config",
+    config = "config",
+		profile = "sh",
+		workrc = "sh",
+  },
+  pattern = {
+    ["tsconfig*.json"] = "jsonc",
+		["Brewfile"] = "ruby",
+  },
+});
+
+-- tab title
 vim.o.title = true
 vim.o.titlestring = " %t"
 -- set highlight on search
@@ -188,12 +215,16 @@ vim.bo.modeline = true
 -- the fucking swapfile recovery stuff, yolo etc.
 vim.o.writebackup = false
 vim.o.swapfile = false
+-- Keep undo history across sessions by storing it in a file
+os.execute("mkdir -p " .. os.getenv("HOME") .. "/.config/nvim/undo")
+vim.o.undodir = os.getenv("HOME") .. "/.config/nvim/undo/"
+vim.o.undofile = true
+vim.o.undolevels = 1000
+vim.o.undoreload = 10000
 -- show substitution live as I type. Yes pls
 vim.o.inccommand = "nosplit"
--- completion-related
-vim.o.inccommand = "nosplit"
 -- hide some of the completion messages -- :h shortmess gives an explanation as to why
-vim.cmd [[set shortmess+=c]]
+vim.o.shortmess = vim.o.shortmess .. "c"
 -- ----------------------------------------------------------------------------
 -- window options
 -- ----------------------------------------------------------------------------
@@ -237,13 +268,19 @@ vim.diagnostic.config {
 	float = {
 		border = "single",
 		severity_sort = true,
-		close_events = { 'BufLeave', 'CursorMoved', 'InsertEnter', 'FocusLost' },
+		close_events = { "BufLeave", "CursorMoved", "InsertEnter", "FocusLost" },
 	},
 	severity_sort = true,
 	update_in_insert = true,
 }
 -- ...and add the autocommands to allow that to show
-vim.cmd [[autocmd CursorHold,CursorHoldI * lua vim.diagnostic.open_float(nil, { focus = false, scope = "cursor" })]]
+vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+	pattern = "*",
+	callback = function ()
+		vim.diagnostic.open_float(nil, { focus = false, scope = "cursor" })
+	end,
+	desc = "Open a diagnostic popup under the cursor",
+})
 -- markdown syntax highlighting
 vim.g.markdown_fenced_languages = {
 	"ts=typescript",
@@ -281,6 +318,7 @@ usercmd("ToggleWordWrap", "set wrap!", {});
 augroup("Configs", { clear = true })
 augroup("BufferUIEffects", { clear = true })
 augroup("FileCleanupOnSave", { clear = true })
+augroup("FiletypeBasedAdjustments", { clear = true })
 
 local nvim_config_filepaths = {
 	os.getenv("HOME") .. "/.config/nvim/init.lua",
@@ -296,14 +334,6 @@ local nvim_config_filepaths = {
 -- 	desc = "Ensure all plugins are up-to-date when any Neovim config files are saved",
 -- })
 
-autocmd({ "BufNewFile", "BufRead" }, {
-	group = "Configs",
-	pattern = { ".workrc", ".profile" },
-	callback = function ()
-		vim.o.filetype = "sh"
-	end,
-	desc = "Set specified arbitrarily-name config files that are sourced by zsh to shell",
-})
 
 autocmd({ "BufWritePost" }, {
     group = "Configs",
@@ -319,14 +349,6 @@ autocmd({ "TextYankPost" }, {
 	desc = "Highlight on yank",
 })
 
-autocmd({ "BufNewFile", "BufRead" }, {
-	pattern = "tsconfig*.json",
-	callback = function()
-			vim.bo.filetype = "jsonc"
-	end,
-	desc = "Set perceived filetype of tsconfig files to jsonc",
-})
-
 autocmd({ "BufWritePre" }, {
 	group = "FileCleanupOnSave",
 	pattern = "*",
@@ -340,103 +362,70 @@ autocmd({ "BufWritePre" }, {
 	command = [[%s/\n\+\%$//e]],
 	desc = "Remove trailing newline"
 })
+
+-- REVIEW: WHAY DO I NEED TO DO THIS?!
+autocmd({ "BufEnter" }, {
+	group = "FiletypeBasedAdjustments",
+	pattern = { "*.html", "*.heex" },
+	callback = function ()
+		vim.bo.shiftwidth = 2
+		vim.bo.tabstop = 2
+	end,
+	desc = "Force 2 spaces for tabs for HTML. WHY???"
+})
 -- }}}
 -- =============================================================================
 -- {{{ Keymaps
 -- =============================================================================
-local keymap = vim.keymap.set
 -- Remap space as leader key
-keymap( "", "<Space>", "<Nop>")
+vim.keymap.set( "", "<Space>", "<Nop>")
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
 -- stylua: ignore start
-local leader_vmaps = {
-	-- Copy/pasting help
-	["y"] = { cmd = [["+y]], desc = "Copy to system clipboard" },
-	["p"] = { cmd = [["+p]], desc = "Paste contents of system clipboard below" },
-	["P"] = { cmd = [["+P]], desc = "Paste contents of system clipboard above" },
-}
-
-local leader_nmaps = {
+local keymaps = {
+	-- Copy/paste help
+	["Copy to system clipboard"] = { mode = "v", lhs = "y", rhs = [["+y]] },
+	["Paste contents of system clipboard below"] = { mode = "v", lhs = "p", rhs = [["+p]] },
+	["Paste contents of system clipboard above"] = { mode = "v", lhs = "P", rhs = [["+P]] },
+	-- Fuzzy find
+	["Find files in cwd"] = { mode = "n", lhs = "ff", rhs = [[<Cmd>lua require("telescope.builtin").find_files()<Cr>]] },
+	["Grep files in cwd"] = { mode = "n", lhs = "fg", rhs = [[<Cmd>lua require("telescope.builtin").live_grep()<Cr>]] },
+	["List open buffers"] = { mode = "n", lhs = "f<Space>", rhs = [[<Cmd>lua require("telescope.builtin").buffers()<Cr>]] },
+	["Search nvim help tags"] = { mode = "n", lhs = "fh", rhs = [[<Cmd>lua require("telescope.builtin").help_tags()<Cr>]]},
+	["List recently opened files"] = { mode = "n", lhs = "fo", rhs = [[<Cmd>lua require("telescope.builtin").oldfiles()<Cr>]] },
+	["List projects"] = { mode = "n", lhs = "fp", rhs = [[<Cmd>lua require("telescope").extensions.project.project()<Cr>]] },
+	["Browse files in cwd"] = { mode = "n", lhs = "fb", rhs = [[<Cmd>lua require("telescope").extensions.file_browser.file_browser()<Cr>]] },
+	["List key mappings"] = { mode = "n", lhs = "fm", rhs = [[<Cmd>lua require("telescope.builtin").keymaps()<Cr>]] },
 	-- A few commands for quickly accessing and saving Neovim config
-	["ve"] = { cmd = [[:e $MYVIMRC<Cr>]], desc = "Edit Neovim's init.lua" },
-	["vE"] = { cmd = [[:view $MYVIMRC<Cr>]], desc = "Open Neovim's init.lua in read-only mode" },
-	["vs"] = { cmd = [[:w<Cr> :luafile $MYVIMRC<Cr>]], desc = "Save and reload Neovim's init.lua file" },
-	["vx"] = { cmd = require("plugin-setup.telescope").find_config_files, desc = "Telescope into Neovim's config directory" },
-	-- require("plugin-setup.telescope") mappings
-	["ff"] = { cmd = require("plugin-setup.telescope").find_files, desc = "Telescope files in cwd" },
-	["fg"] = { cmd = require("plugin-setup.telescope").live_grep, desc = "Grep files in cwd" },
-	["<Space>"] = { cmd = require("plugin-setup.telescope").buffers, desc = "Show currently open buffers in window" },
-	["fh"] = { cmd = require("plugin-setup.telescope").help_tags, desc = "Search [n]vim help tags" },
-	["fo"] = { cmd = require("plugin-setup.telescope").recent_files, desc = "List recently opened files" },
-	["fp"] = { cmd = require("plugin-setup.telescope").projects, desc = "List projects" },
-	["fb"] = { cmd = require("plugin-setup.telescope").file_browser, desc = "Browse files in a popup" },
+	["Edit Neovim's init.lua"] = { mode = "n", lhs = "ve", rhs = [[:e $MYVIMRC<Cr>]] },
+	["Open Neovim's init.lua in read-only mode"] = { mode = "n", lhs = "vE", rhs = [[:view $MYVIMRC<Cr>]] },
+	["Save and reload Neovim's init.lua file"] = { mode = "n", lhs = "vs", rhs = [[:w<Cr> :luafile $MYVIMRC<Cr>]] },
+	["Save current file and source it"] = { mode = "n", lhs = "vw", rhs = ":w<Cr> :source %<Cr>" },
+	["List file/s in Neovim's config directory"] = { mode = "n", lhs = "vx", rhs = function() require("telescope.builtin").find_files({ hidden = true, search_dirs = { vim.env.HOME .. "/.config/nvim" } }) end },
 	-- Toggles
-	["tw"] = { cmd = [[<Cmd>ToggleWordWrap<Cr>]], desc = "Toggle word wrap" },
-	["tc"] = { cmd = [[<Cmd>ColorizerToggle<Cr>]], desc = "Toggle HEX/RGB/etc colour highlighting in buffer" },
+	["Toggle word wrap"] = { mode = "n", lhs = "tw", rhs = [[<Cmd>ToggleWordWrap<Cr>]] },
+	["Toggle HEX/RGB/etc colour highlighting in buffer"] = { mode = "n", lhs = "tc", rhs = [[<Cmd>ColorizerToggle<Cr>]] },
 }
 -- stylua: ignore end
 
-for mapping, conf in pairs(leader_vmaps) do
-	keymap("v", "<Leader>" .. mapping, conf.cmd, { desc = conf.desc })
-end
-
-for mapping, conf in pairs(leader_nmaps) do
-	keymap("n", "<Leader>" .. mapping, conf.cmd, { desc = conf.desc })
+for desc, mapping in pairs(keymaps) do
+	vim.keymap.set(mapping.mode, "<Leader>" .. mapping.lhs, mapping.rhs, { desc = desc })
 end
 -- =============================================================================
 -- }}}
 -- =============================================================================
--- {{{ Additional functionality not covered above
+-- {{{ Plugin setup
 -- =============================================================================
--- Conveniences for netrw. If I move this to a file and `require` it, everything
--- fucks up, so here it is. Mainly `Vex` related:
--- TODO: If I use % to create a new file, it opens the file in the netrw window.
--- I don't want this to happen, I want it to open in the previous window, *ie*
--- have identical behaviour to opening an existing file. How do I do this?
--- That banner doesn't seem very useful. If I can pluck out details of it might
--- be, but just hide it for now by default.
-vim.g.netrw_banner = 0
--- open files in previous window by default.
-vim.g.netrw_browse_split = 4
--- NOTE: controlled by `a`, but default hidden files to "show all", I normally
--- want to see dotfiles etc.
-vim.g.netrw_hide = 0
--- 1 is "keep current dir immune from the browsing dir", 0 keeps the current dir
--- the same as the browsing dir. 1 is the default, but I _think_ I'm going to
--- want this toggleable.
-vim.g.netrw_keepdir = 0
--- set the default list style to "tree"
-vim.g.netrw_liststyle = 3
-vim.g.netrw_altv = 1
--- <tab> map supporting shrinking/expanding a window enabled
-vim.g.netrw_usetab = 1
-vim.g.netrw_winsize = 25
-vim.g.NetrwTopLvlMenu = "Vex"
-
-function ToggleNetrw()
-	if vim.g.NetrwIsOpen then
-		local i = vim.fn.bufnr "$"
-		while i >= 1 do
-			if vim.fn.getbufvar(i, "&filetype") == "netrw" then
-				vim.cmd("bwipeout" .. i)
-				break
-			end
-			i = i - 1
-		end
-		vim.g.NetrwIsOpen = false
-	else
-		vim.g.NetrwIsOpen = true
-		vim.cmd "Vexplore"
-	end
-end
-
-vim.keymap.set("n", "<C-n>", [[:lua ToggleNetrw()<CR>]])
-
-vim.cmd [[
-	augroup AutoDeleteNetrwHiddenBuffers
-		autocmd!
-		autocmd FileType netrw setlocal bufhidden=wipe
-	augroup END
-]]
+-- for plugins that require setup, delegate to seperate modules:
+require("plugin-setup/telescope")
+require("plugin-setup/cmp")
+require("plugin-setup/comment")
+require("plugin-setup/lsp")
+require("plugin-setup/luasnip")
+require("plugin-setup/org")
+require("plugin-setup/treesitter")
+require("plugin-setup/alpha")
+require("plugin-setup/colorizer")
+require("plugin-setup/which-key")
+-- }}}

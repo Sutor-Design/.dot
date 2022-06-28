@@ -137,8 +137,7 @@ local oblique_strategies = function()
 			{ "Lowest common denominator check -single beat -single note -single" },
 			{ "riff" },
 			{ "Make a blank valuable by putting it in an exquisite frame" },
-			{ "Make an exhaustive list of everything you might do and do the last" },
-			{ "thing on the list" },
+			{ "Make an exhaustive list of everything you might do and do the last thing on the list" },
 			{ "Make a sudden, destructive unpredictable action; incorporate" },
 			{ "Mechanicalize something idiosyncratic" },
 			{ "Mute and continue" },
@@ -151,8 +150,7 @@ local oblique_strategies = function()
 			{ "Remove specifics and convert to ambiguities" },
 			{ "Repetition is a form of change" },
 			{ "Reverse" },
-			{ "Short circuit (example: a man eating peas with the idea that they will" },
-			{ "improve his virility shovels them straight into his lap)" },
+			{ "Short circuit (example: a man eating peas with the idea that they will improve his virility shovels them straight into his lap)" },
 			{ "Shut the door and listen from outside" },
 			{ "Simple subtraction" },
 			{ "Spectrum analysis" },
@@ -190,6 +188,12 @@ local oblique_strategies = function()
 	return formatted_strategy
 end
 
+local install_info = function ()
+    local datetime = os.date "%d-%m-%Y %H:%M:%S"
+    return " " .. vim.version().major .. "." .. vim.version().minor .. "." .. vim.version().patch .. "   " .. datetime
+end
+
+dashboard.section.header.val = oblique_strategies()
 dashboard.section.buttons.val = {
 	dashboard.button( "f", "  > Find file", ":cd $HOME | Telescope find_files<CR>"),
 	dashboard.button( "r", "  > Recent"   , ":Telescope oldfiles<CR>"),
@@ -199,6 +203,6 @@ dashboard.section.buttons.val = {
 	-- TODO: this obvs won't work, how could I make it work?
 	-- dashboard.button( "x", "∀  > New strategy", ":lua strategy()<CR>"),
 }
-dashboard.section.footer.val = oblique_strategies()
+dashboard.section.footer.val = install_info()
 
 alpha.setup(dashboard.opts)
