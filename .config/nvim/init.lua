@@ -3,8 +3,7 @@
 -- Dan Couper
 -- danielcouper.sutor@gmail.com
 -- https://github.com/DanCouper
--- NOTE: Requires v7+ of Nvim
-
+-- NOTE: Requires v0.7+ of Nvim  (possibly 0.8? Seeing some issues when just 0.7)
 -- =============================================================================
 -- Prior Art
 -- =============================================================================
@@ -122,14 +121,37 @@ require("packer").startup(function()
 	-- NOTE: Orgzly should be installed on any mobile devices (and everything should be synced between machines).
 	use { "nvim-orgmode/orgmode"}
 	use { "ranjithshegde/orgWiki.nvim" }
+	-- Prose/zenmode-related
+	use { "folke/twilight.nvim" }
+	use { "folke/zen-mode.nvim" }
+	-- Specialist modes
+	use { "jbyuki/venn.nvim" }
+	-- FIXME: table mode wipes out loads of my mappings
+	-- use { "dhruvasagar/vim-table-mode" }
 	-- REVIEW: in-development plugins
-	use { nvim_dir .. "/plugin-dev/sutor_keyfob.nvim" }
+	-- use { nvim_dir .. "/plugin-dev/sutor_keyfob.nvim" }
 	-- Finally, sync Packer if it's been bootstrapped and close off the setup function.
 	if packer_bootstrap then
     require('packer').sync()
   end
 end)
 
+-- }}}
+-- =============================================================================
+-- {{{ Plugin setup
+-- =============================================================================
+-- for plugins that require setup, delegate to seperate modules:
+require("plugin-setup/telescope")
+require("plugin-setup/cmp")
+require("plugin-setup/comment")
+require("plugin-setup/lsp")
+require("plugin-setup/luasnip")
+require("plugin-setup/org")
+require("plugin-setup/treesitter")
+require("plugin-setup/alpha")
+require("plugin-setup/colorizer")
+require("plugin-setup/which-key")
+require("plugin-setup/zenmode")
 -- }}}
 -- =============================================================================
 -- {{{ Theme
@@ -382,6 +404,28 @@ vim.keymap.set( "", "<Space>", "<Nop>")
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
+vim.api.nvim_create_user_command("VennModeToggle", function()
+    local venn_enabled = vim.inspect(vim.b.venn_enabled)
+    if venn_enabled == "nil" then
+        vim.b.venn_enabled = true
+        vim.cmd[[setlocal ve=all]]
+        -- draw a line on HJKL keystokes
+        vim.api.nvim_buf_set_keymap(0, "n", "J", "<C-v>j:VBox<CR>", {noremap = true})
+        vim.api.nvim_buf_set_keymap(0, "n", "K", "<C-v>k:VBox<CR>", {noremap = true})
+        vim.api.nvim_buf_set_keymap(0, "n", "L", "<C-v>l:VBox<CR>", {noremap = true})
+        vim.api.nvim_buf_set_keymap(0, "n", "H", "<C-v>h:VBox<CR>", {noremap = true})
+        -- draw a box by pressing "f" with visual selection
+        vim.api.nvim_buf_set_keymap(0, "v", "f", ":VBox<CR>", {noremap = true})
+    else
+        vim.cmd[[setlocal ve=]]
+        vim.cmd[[mapclear <buffer>]]
+        vim.b.venn_enabled = nil
+    end
+end, {
+	desc = "Toggle venn mode & set venn-mode specific mappings"
+})
+
+
 -- stylua: ignore start
 local keymaps = {
 	-- Copy/paste help
@@ -406,6 +450,11 @@ local keymaps = {
 	-- Toggles
 	["Toggle word wrap"] = { mode = "n", lhs = "tw", rhs = [[<Cmd>ToggleWordWrap<Cr>]] },
 	["Toggle HEX/RGB/etc colour highlighting in buffer"] = { mode = "n", lhs = "tc", rhs = [[<Cmd>ColorizerToggle<Cr>]] },
+	["Toggle twighlight"] = { mode = "n", lhs = "tt", rhs = [[<Cmd>Twilight<Cr>]] },
+	["Toggle zen mode"] = { mode = "n", lhs = "tz", rhs = [[<Cmd>lua require("zen-mode").toggle({ window = { width = .85 }})<Cr>]] },
+	-- TODO: table mode just blindly adds in a load of mappings that override stuff I need
+	-- ["Toggle table mode"] = { mode = "n", lhs = "tm", rhs = [[<Cmd>TableModeToggle<Cr>]] },
+	["Toggle venn.nvim's diagram drawing mode"] = { mode = "n", lhs = "tv", rhs = [[<Cmd>VennModeToggle<Cr>]] },
 }
 -- stylua: ignore end
 
@@ -415,17 +464,3 @@ end
 -- =============================================================================
 -- }}}
 -- =============================================================================
--- {{{ Plugin setup
--- =============================================================================
--- for plugins that require setup, delegate to seperate modules:
-require("plugin-setup/telescope")
-require("plugin-setup/cmp")
-require("plugin-setup/comment")
-require("plugin-setup/lsp")
-require("plugin-setup/luasnip")
-require("plugin-setup/org")
-require("plugin-setup/treesitter")
-require("plugin-setup/alpha")
-require("plugin-setup/colorizer")
-require("plugin-setup/which-key")
--- }}}
